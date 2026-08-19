@@ -177,6 +177,11 @@ body {
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
   html {
     color-scheme: light;
   }
@@ -195,6 +200,25 @@ body {
   html,
   body {
     background: white;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.35;
+  }
+
+  article {
+    break-inside: avoid;
+    border: 1px solid #d5dce3 !important;
+    box-shadow: none !important;
+  }
+
+  .docket-pips {
+    opacity: 0.7;
+  }
+
+  .font-display {
+    letter-spacing: -0.01em;
   }
 
   .no-print {

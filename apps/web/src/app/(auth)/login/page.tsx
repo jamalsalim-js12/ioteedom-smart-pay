@@ -82,10 +82,12 @@ export default function LoginPage() {
               setPhone("024 412 8891");
               setPin(DEMO_PIN);
               const result = signIn(DEMO_PHONE, DEMO_PIN);
-              if (!result) {
-                const onboarded = useDemoStore.getState().onboarded;
-                router.replace(onboarded ? "/" : "/onboarding");
+              if (result) {
+                setError(result);
+                return;
               }
+              const onboarded = useDemoStore.getState().onboarded;
+              router.replace(onboarded ? "/" : "/onboarding");
             }}
           >
             Sign in as household
@@ -98,9 +100,11 @@ export default function LoginPage() {
               setPhone("020 111 2233");
               setPin(OPS_PIN);
               const result = signIn(OPS_PHONE, OPS_PIN);
-              if (!result) {
-                router.replace("/admin");
+              if (result) {
+                setError(result);
+                return;
               }
+              router.replace("/admin");
             }}
           >
             Sign in as operator

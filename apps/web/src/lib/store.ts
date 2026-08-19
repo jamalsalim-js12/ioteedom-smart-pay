@@ -78,6 +78,15 @@ export type OpsAccountPatch = {
   status?: OpsAccountStatus;
 };
 
+export type OpsActivityEntry = {
+  id: string;
+  at: string;
+  actor: string;
+  action: "account_updated" | "status_changed";
+  accountId: string;
+  summary: string;
+};
+
 export type BillState = (typeof initialBills)[BillId];
 
 export type HouseState = {
@@ -238,6 +247,7 @@ type Store = {
   houseEvents: HouseEvent[];
   solarExport: boolean;
   opsAccounts: Record<string, OpsAccountPatch>;
+  opsActivityLog: OpsActivityEntry[];
   markHydrated: () => void;
   signUp: (input: { name: string; phone: string; email: string; pin: string }) => void;
   signIn: (phone: string, pin: string) => string | null;
@@ -271,6 +281,9 @@ type Store = {
   toggleSolarExport: () => void;
   updateOpsAccount: (id: string, patch: OpsAccountPatch) => void;
   toggleOpsAccountStatus: (id: string) => void;
+  logOpsActivity: (
+    input: Omit<OpsActivityEntry, "id" | "at" | "actor"> & { actor?: string },
+  ) => void;
   logEvent: (text: string) => void;
   findPayment: (ref: string) => Payment | undefined;
   allPayments: () => Payment[];
@@ -307,6 +320,7 @@ const initialState = {
   houseEvents: [...homeEvents] as HouseEvent[],
   solarExport: false,
   opsAccounts: {},
+  opsActivityLog: [],
 };
 
 function activeHouse(state: { houses: Record<PropertyId, HouseState>; activePropertyId: PropertyId }) {
@@ -352,15 +366,22 @@ export const useDemoStore = create<Store>()(
           enabled: { ...allOff },
         }),
       signIn: (phone, pin) => {
+        const state = get();
         const clean = digits(phone);
         const ops = clean === digits(OPS_PHONE) && pin === OPS_PIN;
         const demo = clean === digits(DEMO_PHONE) && pin === DEMO_PIN;
         const mine =
-          digits(get().profile.phone || get().session?.phone || "") === clean &&
-          pin === get().pin &&
-          get().session?.role !== "ops";
+          digits(state.profile.phone || state.session?.phone || "") === clean &&
+          pin === state.pin &&
+          state.session?.role !== "ops";
+
+        const suspended = (id: string) =>
+          (state.opsAccounts[id]?.status ?? "active") === "suspended";
 
         if (!ops && !demo && !mine) return "Phone or PIN does not match.";
+        if ((demo || mine) && suspended("east-legon")) {
+          return "This account is suspended. Contact support.";
+        }
 
         if (ops) {
           set({
@@ -863,20 +884,57 @@ export const useDemoStore = create<Store>()(
               ...patch,
             },
           },
+          opsActivityLog: [
+            {
+              id: `ops-log-${Date.now()}`,
+              at: stamp(),
+              actor: state.session?.name || "Operator",
+              action: "account_updated",
+              accountId: id,
+              summary: `Updated account fields for ${id}`,
+            },
+            ...state.opsActivityLog,
+          ],
         })),
       toggleOpsAccountStatus: (id) =>
         set((state) => {
           const current = state.opsAccounts[id]?.status ?? "active";
+          const next = current === "active" ? "suspended" : "active";
           return {
             opsAccounts: {
               ...state.opsAccounts,
               [id]: {
                 ...(state.opsAccounts[id] ?? {}),
-                status: current === "active" ? "suspended" : "active",
+                status: next,
               },
             },
+            opsActivityLog: [
+              {
+                id: `ops-log-${Date.now()}`,
+                at: stamp(),
+                actor: state.session?.name || "Operator",
+                action: "status_changed",
+                accountId: id,
+                summary: `${next === "suspended" ? "Suspended" : "Activated"} account ${id}`,
+              },
+              ...state.opsActivityLog,
+            ],
           };
         }),
+      logOpsActivity: ({ actor, action, accountId, summary }) =>
+        set((state) => ({
+          opsActivityLog: [
+            {
+              id: `ops-log-${Date.now()}`,
+              at: stamp(),
+              actor: actor || state.session?.name || "Operator",
+              action,
+              accountId,
+              summary,
+            },
+            ...state.opsActivityLog,
+          ],
+        })),
       logEvent: (text) =>
         set((state) => ({
           houseEvents: [{ at: stamp(), text }, ...state.houseEvents],
@@ -894,7 +952,7 @@ export const useDemoStore = create<Store>()(
     }),
     {
       name: "ioteedom-demo-v4",
-      version: 5,
+      version: 6,
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<Store>;
         return {
@@ -902,6 +960,7 @@ export const useDemoStore = create<Store>()(
           ...persisted,
           houses: normalizeHouses(persisted.houses ?? currentState.houses),
           opsAccounts: persisted.opsAccounts ?? currentState.opsAccounts,
+          opsActivityLog: persisted.opsActivityLog ?? currentState.opsActivityLog,
         };
       },
       partialize: (state) => ({
@@ -921,6 +980,7 @@ export const useDemoStore = create<Store>()(
         houseEvents: state.houseEvents,
         solarExport: state.solarExport,
         opsAccounts: state.opsAccounts,
+        opsActivityLog: state.opsActivityLog,
       }),
       onRehydrateStorage: () => () => {
         useDemoStore.getState().markHydrated();

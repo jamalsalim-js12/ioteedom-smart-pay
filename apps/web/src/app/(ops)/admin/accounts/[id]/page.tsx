@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Receipt, Search } from "lucide-react";
@@ -25,22 +25,12 @@ export default function OpsAccountDetailPage() {
   const related = payments.filter((item) => item.propertyId === id);
   const house = id === "east-legon" ? east : id === "airport" ? airport : null;
   const bills = house ? Object.values(house.bills) : [];
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    property: "",
-    city: "",
-  });
-
-  useEffect(() => {
-    if (!account) return;
-    setForm({
-      name: account.name,
-      phone: account.phone,
-      property: account.property,
-      city: account.city,
-    });
-  }, [id, account?.id]);
+  const [form, setForm] = useState(() => ({
+    name: account?.name ?? "",
+    phone: account?.phone ?? "",
+    property: account?.property ?? "",
+    city: account?.city ?? "",
+  }));
 
   if (!account) {
     return (
