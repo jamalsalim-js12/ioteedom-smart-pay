@@ -38,12 +38,12 @@ export function NotificationsMenu({
       id: alert.id,
       title: alert.title,
       detail: alert.body,
-      at: alert.at,
+      at: alert.service.toUpperCase(),
     }));
     const events = house.usage.slice(0, 2).map((usage, index) => ({
       id: `usage-${usage.month}-${index}`,
       title: `Usage update · ${usage.month}`,
-      detail: `ECG ${usage.ecg} kWh · Water ${usage.water} m3`,
+      detail: `Energy ${usage.kwh} kWh · Water ${usage.water} m3`,
       at: usage.month,
     }));
     return [...alerts, ...events];
