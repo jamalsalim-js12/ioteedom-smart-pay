@@ -92,7 +92,6 @@ export function ReceiptDialog() {
                 type="button"
                 onClick={() => {
                   const ref = receipt.ref;
-                  showReceipt(null);
                   router.push(`/receipts/${ref}`);
                 }}
               >

@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Receipt, Search } from "lucide-react";
 import { Facts } from "@/components/ops/facts";
 import { OpsTopbar } from "@/components/shell/ops-shell";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Field } from "@/components/ui/field";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { paymentStatusClass } from "@/components/ui/receipt-dialog";
 import { compactCedis } from "@/lib/format";
@@ -16,10 +19,28 @@ export default function OpsAccountDetailPage() {
   const id = routeParam(useParams<{ id: string }>().id);
   const { accounts, payments, east, airport } = useOpsSnapshot();
   const houses = useDemoStore((s) => s.houses);
+  const updateOpsAccount = useDemoStore((s) => s.updateOpsAccount);
+  const toggleOpsAccountStatus = useDemoStore((s) => s.toggleOpsAccountStatus);
   const account = accounts.find((item) => item.id === id);
   const related = payments.filter((item) => item.propertyId === id);
   const house = id === "east-legon" ? east : id === "airport" ? airport : null;
   const bills = house ? Object.values(house.bills) : [];
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    property: "",
+    city: "",
+  });
+
+  useEffect(() => {
+    if (!account) return;
+    setForm({
+      name: account.name,
+      phone: account.phone,
+      property: account.property,
+      city: account.city,
+    });
+  }, [id, account?.id]);
 
   if (!account) {
     return (
@@ -46,6 +67,73 @@ export default function OpsAccountDetailPage() {
         title={account.name}
       />
       <div className="flex flex-col gap-5 p-6">
+        <Panel>
+          <PanelHeader eyebrow="Admin controls" title="Manage account" />
+          <form
+            className="grid gap-3 px-5 py-4 sm:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              updateOpsAccount(id, {
+                name: form.name.trim(),
+                phone: form.phone.trim(),
+                property: form.property.trim(),
+                city: form.city.trim(),
+              });
+            }}
+          >
+            <Field
+              label="Account name"
+              value={form.name}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, name: event.target.value }))
+              }
+            />
+            <Field
+              label="Phone"
+              value={form.phone}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, phone: event.target.value }))
+              }
+            />
+            <Field
+              label="Property"
+              value={form.property}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, property: event.target.value }))
+              }
+            />
+            <Field
+              label="City"
+              value={form.city}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, city: event.target.value }))
+              }
+            />
+            <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+              <Button type="submit" intent="ink" size="sm">
+                Save changes
+              </Button>
+              <Button
+                type="button"
+                intent="ghost"
+                size="sm"
+                onClick={() => toggleOpsAccountStatus(id)}
+              >
+                {account.status === "active" ? "Suspend account" : "Activate account"}
+              </Button>
+              <span
+                className={
+                  account.status === "active"
+                    ? "rounded-full bg-ok/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ok"
+                    : "rounded-full bg-live/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-live"
+                }
+              >
+                {account.status}
+              </span>
+            </div>
+          </form>
+        </Panel>
+
         <Panel>
           <PanelHeader
             eyebrow={account.kind === "estate" ? "Estate" : "Household"}

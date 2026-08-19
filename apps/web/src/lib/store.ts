@@ -68,6 +68,16 @@ export type ChargeSession = {
   method: PaymentMethod;
 };
 
+export type OpsAccountStatus = "active" | "suspended";
+
+export type OpsAccountPatch = {
+  name?: string;
+  phone?: string;
+  property?: string;
+  city?: string;
+  status?: OpsAccountStatus;
+};
+
 export type BillState = (typeof initialBills)[BillId];
 
 export type HouseState = {
@@ -227,6 +237,7 @@ type Store = {
   sessions: ChargeSession[];
   houseEvents: HouseEvent[];
   solarExport: boolean;
+  opsAccounts: Record<string, OpsAccountPatch>;
   markHydrated: () => void;
   signUp: (input: { name: string; phone: string; email: string; pin: string }) => void;
   signIn: (phone: string, pin: string) => string | null;
@@ -258,6 +269,8 @@ type Store = {
   startCharge: (site: string) => string | null;
   stopCharge: () => ChargeSession | null;
   toggleSolarExport: () => void;
+  updateOpsAccount: (id: string, patch: OpsAccountPatch) => void;
+  toggleOpsAccountStatus: (id: string) => void;
   logEvent: (text: string) => void;
   findPayment: (ref: string) => Payment | undefined;
   allPayments: () => Payment[];
@@ -293,6 +306,7 @@ const initialState = {
   sessions: [...evSessions] as ChargeSession[],
   houseEvents: [...homeEvents] as HouseEvent[],
   solarExport: false,
+  opsAccounts: {},
 };
 
 function activeHouse(state: { houses: Record<PropertyId, HouseState>; activePropertyId: PropertyId }) {
@@ -840,6 +854,29 @@ export const useDemoStore = create<Store>()(
             ...state.houseEvents,
           ],
         })),
+      updateOpsAccount: (id, patch) =>
+        set((state) => ({
+          opsAccounts: {
+            ...state.opsAccounts,
+            [id]: {
+              ...(state.opsAccounts[id] ?? {}),
+              ...patch,
+            },
+          },
+        })),
+      toggleOpsAccountStatus: (id) =>
+        set((state) => {
+          const current = state.opsAccounts[id]?.status ?? "active";
+          return {
+            opsAccounts: {
+              ...state.opsAccounts,
+              [id]: {
+                ...(state.opsAccounts[id] ?? {}),
+                status: current === "active" ? "suspended" : "active",
+              },
+            },
+          };
+        }),
       logEvent: (text) =>
         set((state) => ({
           houseEvents: [{ at: stamp(), text }, ...state.houseEvents],
@@ -857,13 +894,14 @@ export const useDemoStore = create<Store>()(
     }),
     {
       name: "ioteedom-demo-v4",
-      version: 4,
+      version: 5,
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<Store>;
         return {
           ...currentState,
           ...persisted,
           houses: normalizeHouses(persisted.houses ?? currentState.houses),
+          opsAccounts: persisted.opsAccounts ?? currentState.opsAccounts,
         };
       },
       partialize: (state) => ({
@@ -882,6 +920,7 @@ export const useDemoStore = create<Store>()(
         sessions: state.sessions,
         houseEvents: state.houseEvents,
         solarExport: state.solarExport,
+        opsAccounts: state.opsAccounts,
       }),
       onRehydrateStorage: () => () => {
         useDemoStore.getState().markHydrated();

@@ -12,9 +12,10 @@ export default function ReceiptPrintPage() {
   const ref = Array.isArray(params.ref) ? params.ref[0] : params.ref;
   const router = useRouter();
   const payment = useDemoStore((s) =>
-    Object.values(s.houses)
-      .flatMap((house) => house.payments)
-      .find((item) => item.ref === ref),
+    [
+      ...Object.values(s.houses).flatMap((house) => house.payments),
+      ...s.platformPayments,
+    ].find((item) => item.ref === ref),
   );
 
   return (

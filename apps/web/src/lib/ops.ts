@@ -1,10 +1,17 @@
 "use client";
 
 import { platformAccounts, platformChargers } from "@/data/platform";
-import { openAmount, useDemoStore, type HouseState, type Payment } from "@/lib/store";
+import {
+  openAmount,
+  useDemoStore,
+  type HouseState,
+  type OpsAccountStatus,
+  type Payment,
+} from "@/lib/store";
 
 export type OpsAccount = (typeof platformAccounts)[number] & {
   live: boolean;
+  status: OpsAccountStatus;
 };
 
 export function chargerSlug(name: string) {
@@ -27,6 +34,7 @@ export function useOpsSnapshot() {
   const houses = useDemoStore((s) => s.houses);
   const profile = useDemoStore((s) => s.profile);
   const platformPayments = useDemoStore((s) => s.platformPayments);
+  const opsAccounts = useDemoStore((s) => s.opsAccounts);
   const east = houses["east-legon"];
   const airport = houses.airport;
   const leakResolved = east.leakResolved;
@@ -34,11 +42,11 @@ export function useOpsSnapshot() {
   const accounts: OpsAccount[] = [
     {
       id: "east-legon",
-      name: profile.name || "Ama Mensah",
-      phone: profile.phone || "024 412 8891",
+      name: opsAccounts["east-legon"]?.name || profile.name || "Ama Mensah",
+      phone: opsAccounts["east-legon"]?.phone || profile.phone || "024 412 8891",
       kind: "home",
-      property: east.address,
-      city: profile.city || "Accra",
+      property: opsAccounts["east-legon"]?.property || east.address,
+      city: opsAccounts["east-legon"]?.city || profile.city || "Accra",
       lastSeen: east.lastSeen,
       open: openAmount(east),
       modules: ["ECG", "Water", "Waste", "Fibre"],
@@ -46,22 +54,32 @@ export function useOpsSnapshot() {
         ? "Leak watch on WM-110384 is cleared."
         : "Water meter WM-110384 is on leak watch.",
       live: true,
+      status: opsAccounts["east-legon"]?.status ?? "active",
     },
     {
       id: "airport",
-      name: "Airport Residential",
-      phone: profile.phone || "024 412 8891",
+      name: opsAccounts.airport?.name || "Airport Residential",
+      phone: opsAccounts.airport?.phone || profile.phone || "024 412 8891",
       kind: "estate",
-      property: airport.address,
-      city: "Accra",
+      property: opsAccounts.airport?.property || airport.address,
+      city: opsAccounts.airport?.city || "Accra",
       lastSeen: airport.lastSeen,
       open: openAmount(airport),
       units: airport.units.length,
       modules: ["ECG", "Water", "Waste"],
       note: "Four units share a combined ECG and water docket.",
       live: true,
+      status: opsAccounts.airport?.status ?? "active",
     },
-    ...platformAccounts.map((item) => ({ ...item, live: false })),
+    ...platformAccounts.map((item) => ({
+      ...item,
+      name: opsAccounts[item.id]?.name || item.name,
+      phone: opsAccounts[item.id]?.phone || item.phone,
+      property: opsAccounts[item.id]?.property || item.property,
+      city: opsAccounts[item.id]?.city || item.city,
+      live: false,
+      status: opsAccounts[item.id]?.status ?? "active",
+    })),
   ];
 
   const payments: Payment[] = [

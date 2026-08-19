@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { OpsTopbar } from "@/components/shell/ops-shell";
+import { Button } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { compactCedis } from "@/lib/format";
 import { useOpsSnapshot } from "@/lib/ops";
+import { useDemoStore } from "@/lib/store";
 
 export default function OpsAccountsPage() {
   const { accounts } = useOpsSnapshot();
+  const toggleOpsAccountStatus = useDemoStore((s) => s.toggleOpsAccountStatus);
   const open = accounts.filter((item) => item.open > 0).length;
 
   return (
@@ -41,7 +44,29 @@ export default function OpsAccountsPage() {
                       Last seen {item.lastSeen} · {item.city}
                     </p>
                   </div>
-                  <p className="tabular font-medium">{compactCedis(item.open)}</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={
+                        item.status === "active"
+                          ? "rounded-full bg-ok/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ok"
+                          : "rounded-full bg-live/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-live"
+                      }
+                    >
+                      {item.status}
+                    </span>
+                    <p className="tabular font-medium">{compactCedis(item.open)}</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      intent="ghost"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        toggleOpsAccountStatus(item.id);
+                      }}
+                    >
+                      {item.status === "active" ? "Suspend" : "Activate"}
+                    </Button>
+                  </div>
                 </Link>
               </li>
             ))}
