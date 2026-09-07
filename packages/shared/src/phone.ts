@@ -19,6 +19,19 @@ export function normalizeGhPhone(value: string): string | null {
   return null;
 }
 
+export const PIN_LENGTH = 4;
+export const PIN_PATTERN = /^\d{4}$/;
+
 export function isPin(value: string): boolean {
-  return /^\d{4,6}$/.test(value);
+  return PIN_PATTERN.test(value);
+}
+
+/** Display as `024 412 8891`. Accepts local or 233-prefixed input. */
+export function formatGhPhoneDisplay(value: string): string {
+  const digits = digitsOnly(value);
+  const local = (
+    digits.startsWith(GHANA_COUNTRY) ? `0${digits.slice(GHANA_COUNTRY.length)}` : digits
+  ).slice(0, 10);
+  const parts = [local.slice(0, 3), local.slice(3, 6), local.slice(6, 10)].filter(Boolean);
+  return parts.join(" ");
 }

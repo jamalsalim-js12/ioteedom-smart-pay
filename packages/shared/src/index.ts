@@ -22,7 +22,14 @@ export {
   type Pesewas,
   pesewasFromCedisString,
 } from "./money";
-export { digitsOnly, isPin, normalizeGhPhone } from "./phone";
+export {
+  digitsOnly,
+  formatGhPhoneDisplay,
+  isPin,
+  normalizeGhPhone,
+  PIN_LENGTH,
+  PIN_PATTERN,
+} from "./phone";
 export {
   FULFILLMENT_STATUSES,
   type FulfillmentStatus,
