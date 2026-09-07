@@ -13,3 +13,4 @@ onlyBuiltDependencies:
   - prisma
   - msgpackr-extract
   - esbuild
+  - argon2

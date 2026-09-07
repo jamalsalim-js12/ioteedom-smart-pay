@@ -5,6 +5,7 @@ import { Check, ChevronDown } from "lucide-react";
 import type { PropertyId } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
+import { demoPropertyId, useAuthSession } from "@/lib/session";
 import { openAmount, useDemoStore } from "@/lib/store";
 
 export function HouseSwitcher({
@@ -18,8 +19,12 @@ export function HouseSwitcher({
   const active = useDemoStore((s) => s.activePropertyId);
   const switchProperty = useDemoStore((s) => s.switchProperty);
   const session = useDemoStore((s) => s.session);
+  const { session: authSession } = useAuthSession();
   const dark = tone === "dark";
-  const list = Object.values(houses);
+  const allowed = new Set(
+    (authSession?.memberships ?? []).map((membership) => demoPropertyId(membership.accountKind)),
+  );
+  const list = Object.values(houses).filter((house) => allowed.size === 0 || allowed.has(house.id));
   const current = houses[active];
   const tenant = session?.role === "tenant";
   const unit =

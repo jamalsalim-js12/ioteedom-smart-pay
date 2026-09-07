@@ -8,7 +8,8 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "prestart:dev": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build",
-    "prebuild": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build"
+    "prebuild": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build",
+    "openapi": "nest build && node dist/openapi.js"
   },
   "dependencies": {
     "@ioteedom/db": "workspace:*",
@@ -16,13 +17,21 @@
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/swagger": "^11.4.7",
+    "@nestjs/throttler": "^6.4.0",
+    "argon2": "^0.44.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/node": "^20.19.11",
     "typescript": "^5.9.2"

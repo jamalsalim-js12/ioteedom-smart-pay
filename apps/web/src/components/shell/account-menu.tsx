@@ -4,7 +4,7 @@ import { Menu } from "@base-ui/react/menu";
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { useDemoStore } from "@/lib/store";
+import { useAuthSession } from "@/lib/session";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -30,12 +30,9 @@ export function AccountMenu({
   layout?: "icon" | "row";
 }) {
   const router = useRouter();
-  const session = useDemoStore((s) => s.session);
-  const profile = useDemoStore((s) => s.profile);
-  const signOut = useDemoStore((s) => s.signOut);
-  const name = session?.name || profile.name || "Account";
-  const phone = session?.phone || profile.phone;
-  const email = session?.email || profile.email;
+  const { session, signOut } = useAuthSession();
+  const name = session?.name || "Account";
+  const phone = session?.phoneDisplay;
   const ops = session?.role === "ops";
   const dark = tone === "dark";
   const row = layout === "row";
@@ -45,7 +42,7 @@ export function AccountMenu({
   }
 
   function leave() {
-    signOut();
+    void signOut();
     router.replace("/login");
   }
 
@@ -84,7 +81,7 @@ export function AccountMenu({
                 dark ? "text-white/50" : "text-mute",
               )}
             >
-              {phone || email}
+              {phone}
             </span>
           </span>
         ) : null}
@@ -103,7 +100,7 @@ export function AccountMenu({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{name}</p>
-                <p className="mt-0.5 truncate font-mono text-[11px] text-mute">{email || phone}</p>
+                <p className="mt-0.5 truncate font-mono text-[11px] text-mute">{phone}</p>
                 <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-mute">
                   {ops ? "Super admin" : "Household"}
                 </p>

@@ -6,11 +6,12 @@ import { Topbar } from "@/components/shell/topbar";
 import { AppearancePanel } from "@/components/theme/appearance-panel";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
+import { useAuthSession } from "@/lib/session";
 import { useDemoStore } from "@/lib/store";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const signOut = useDemoStore((s) => s.signOut);
+  const { signOut } = useAuthSession();
   const activePropertyId = useDemoStore((s) => s.activePropertyId);
   const role = useDemoStore((s) => s.session?.role);
 
@@ -27,7 +28,7 @@ export default function ProfilePage() {
           <Button
             intent="ink"
             onClick={() => {
-              signOut();
+              void signOut();
               router.replace("/login");
             }}
           >

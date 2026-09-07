@@ -1,23 +1,34 @@
+import { argon2id, hash } from "argon2";
 import { ulid } from "ulid";
 import { createPrismaClient } from "../dist/index.js";
 
 const prisma = createPrismaClient();
 
-const PLACEHOLDER_PIN = "INVITE_PIN_NOT_HASHED_YET";
+/** Matches the prototype owner PIN so KON-14 can wire the same numbers. */
+const SEED_OWNER_PIN = "2468";
+const SEED_STAFF_PIN = "1357";
 
 const MODULES = ["ecg", "water", "utilities", "meters", "smart_home", "solar", "ev"] as const;
 
 async function main() {
+  const pinHash = await hash(SEED_OWNER_PIN, { type: argon2id });
+  const staffPinHash = await hash(SEED_STAFF_PIN, { type: argon2id });
+
   const staff = await prisma.staffUser.upsert({
     where: { phone: "233200000001" },
-    update: {},
+    update: {
+      pinHash: staffPinHash,
+      mustChangePin: true,
+      pinFailedCount: 0,
+      pinLockedUntil: null,
+    },
     create: {
       id: ulid(),
       phone: "233200000001",
       phoneDisplay: "020 000 0001",
       email: "ops@ioteedom.local",
       name: "IoTeedom Superadmin",
-      pinHash: PLACEHOLDER_PIN,
+      pinHash: staffPinHash,
       mustChangePin: true,
       role: "superadmin",
     },
@@ -68,12 +79,14 @@ async function main() {
     phoneDisplay: "024 412 8891",
     name: "Ama Mensah",
     accountId: homeAccount.id,
+    pinHash,
   });
   await upsertOwner({
     phone: "233302000100",
     phoneDisplay: "030 200 0100",
     name: "Airport Residential Ltd",
     accountId: estateAccount.id,
+    pinHash,
   });
 }
 
@@ -81,7 +94,12 @@ async function upsertAccount(input: { name: string; kind: "home" | "estate"; sta
   const existing = await prisma.account.findFirst({
     where: { name: input.name, kind: input.kind },
   });
-  if (existing) return existing;
+  if (existing) {
+    return prisma.account.update({
+      where: { id: existing.id },
+      data: { status: "invited", onboardedAt: null },
+    });
+  }
   return prisma.account.create({
     data: {
       id: ulid(),
@@ -123,16 +141,23 @@ async function upsertOwner(input: {
   phoneDisplay: string;
   name: string;
   accountId: string;
+  pinHash: string;
 }) {
   const user = await prisma.user.upsert({
     where: { phone: input.phone },
-    update: {},
+    update: {
+      pinHash: input.pinHash,
+      mustChangePin: true,
+      pinFailedCount: 0,
+      pinLockedUntil: null,
+    },
     create: {
       id: ulid(),
       phone: input.phone,
       phoneDisplay: input.phoneDisplay,
       name: input.name,
-      pinHash: PLACEHOLDER_PIN,
+      pinHash: input.pinHash,
+      mustChangePin: true,
     },
   });
   await prisma.membership.upsert({
