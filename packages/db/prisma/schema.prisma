@@ -7,5 +7,269 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Identity, property, module, and money tables land in KON-11.
-// This package still generates a client so the API can $connect / SELECT 1.
+enum UserStatus {
+  active
+  suspended
+}
+
+enum StaffRole {
+  superadmin
+  support
+}
+
+enum AccountKind {
+  home
+  estate
+}
+
+enum AccountStatus {
+  invited
+  active
+  suspended
+}
+
+enum ModuleId {
+  ecg
+  water
+  utilities
+  meters
+  smart_home
+  solar
+  ev
+}
+
+enum MembershipRole {
+  owner
+  manager
+}
+
+enum PropertyKind {
+  home
+  estate
+}
+
+enum PropertyStatus {
+  active
+  archived
+}
+
+enum InviteKind {
+  owner
+  tenant
+}
+
+enum InvitedByType {
+  staff
+  owner
+}
+
+enum ActorType {
+  staff
+  user
+  system
+}
+
+/// Household person. Role is membership, not a column here.
+model User {
+  id              String     @id
+  phone           String     @unique
+  phoneDisplay    String     @map("phone_display")
+  email           String?
+  name            String
+  pinHash         String     @map("pin_hash")
+  mustChangePin   Boolean    @default(true) @map("must_change_pin")
+  status          UserStatus @default(active)
+  pinFailedCount  Int        @default(0) @map("pin_failed_count")
+  pinLockedUntil  DateTime?  @map("pin_locked_until") @db.Timestamptz
+  lastSeenAt      DateTime?  @map("last_seen_at") @db.Timestamptz
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz
+
+  memberships    Membership[]
+  occupancies    Occupancy[]
+  refreshTokens  RefreshToken[]
+
+  @@map("users")
+}
+
+/// IoTeedom operators. Separate from household users. /admin only.
+model StaffUser {
+  id             String     @id
+  phone          String     @unique
+  phoneDisplay   String     @map("phone_display")
+  email          String?
+  name           String
+  pinHash        String     @map("pin_hash")
+  mustChangePin  Boolean    @default(true) @map("must_change_pin")
+  role           StaffRole
+  status         UserStatus @default(active)
+  pinFailedCount Int        @default(0) @map("pin_failed_count")
+  pinLockedUntil DateTime?  @map("pin_locked_until") @db.Timestamptz
+  lastSeenAt     DateTime?  @map("last_seen_at") @db.Timestamptz
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz
+
+  accountsCreated Account[]        @relation("AccountCreatedBy")
+  modulesSet      AccountModule[]  @relation("ModuleSetBy")
+  refreshTokens   RefreshToken[]
+
+  @@map("staff_users")
+}
+
+model Account {
+  id                String        @id
+  name              String
+  kind              AccountKind
+  status            AccountStatus @default(invited)
+  onboardedAt       DateTime?     @map("onboarded_at") @db.Timestamptz
+  createdByStaffId  String        @map("created_by_staff_id")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  createdByStaff StaffUser        @relation("AccountCreatedBy", fields: [createdByStaffId], references: [id])
+  modules        AccountModule[]
+  memberships    Membership[]
+  properties     Property[]
+  invites        Invite[]
+  auditLogs      AuditLog[]
+
+  @@index([createdByStaffId])
+  @@map("accounts")
+}
+
+model AccountModule {
+  accountId    String    @map("account_id")
+  module       ModuleId
+  enabled      Boolean
+  setByStaffId String    @map("set_by_staff_id")
+  setAt        DateTime  @default(now()) @map("set_at") @db.Timestamptz
+
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  setByStaff StaffUser @relation("ModuleSetBy", fields: [setByStaffId], references: [id])
+
+  @@id([accountId, module])
+  @@index([setByStaffId])
+  @@map("account_modules")
+}
+
+model Membership {
+  id        String          @id
+  userId    String          @map("user_id")
+  accountId String          @map("account_id")
+  role      MembershipRole
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  user    User    @relation(fields: [userId], references: [id])
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accountId])
+  @@index([accountId])
+  @@map("memberships")
+}
+
+model Property {
+  id                         String         @id
+  accountId                  String         @map("account_id")
+  label                      String
+  address                    String
+  city                       String
+  kind                       PropertyKind
+  waterTariffPesewasPerM3    BigInt?        @map("water_tariff_pesewas_per_m3")
+  status                     PropertyStatus @default(active)
+  createdAt                  DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt                  DateTime?      @map("deleted_at") @db.Timestamptz
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  units   Unit[]
+
+  @@index([accountId])
+  @@map("properties")
+}
+
+model Unit {
+  id         String @id
+  propertyId String @map("property_id")
+  name       String
+  sortOrder  Int    @default(0) @map("sort_order")
+
+  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  occupancies Occupancy[]
+  invites     Invite[]
+
+  @@index([propertyId])
+  @@map("units")
+}
+
+model Occupancy {
+  id        String    @id
+  unitId    String    @map("unit_id")
+  userId    String    @map("user_id")
+  startedAt DateTime  @map("started_at") @db.Timestamptz
+  endedAt   DateTime? @map("ended_at") @db.Timestamptz
+
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([unitId])
+  /// One open occupancy per unit is enforced in SQL: occupancies_one_open_per_unit
+  @@map("occupancies")
+}
+
+model Invite {
+  id            String        @id
+  kind          InviteKind
+  accountId     String        @map("account_id")
+  unitId        String?       @map("unit_id")
+  phone         String
+  email         String?
+  name          String
+  pinHash       String        @map("pin_hash")
+  expiresAt     DateTime      @map("expires_at") @db.Timestamptz
+  acceptedAt    DateTime?     @map("accepted_at") @db.Timestamptz
+  invitedByType InvitedByType @map("invited_by_type")
+  invitedById   String        @map("invited_by_id")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  unit    Unit?   @relation(fields: [unitId], references: [id])
+
+  @@index([phone])
+  @@index([accountId])
+  @@map("invites")
+}
+
+/// Rotatable refresh tokens, stored hashed. Access JWTs are stateless.
+model RefreshToken {
+  id           String    @id
+  userId       String?   @map("user_id")
+  staffUserId  String?   @map("staff_user_id")
+  tokenHash    String    @unique @map("token_hash")
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz
+  replacedById String?   @map("replaced_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  staffUser StaffUser? @relation(fields: [staffUserId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([staffUserId])
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String    @id
+  actorType  ActorType @map("actor_type")
+  actorId    String    @map("actor_id")
+  action     String
+  accountId  String?   @map("account_id")
+  targetType String    @map("target_type")
+  targetId   String    @map("target_id")
+  diff       Json?
+  at         DateTime  @default(now()) @db.Timestamptz
+
+  account Account? @relation(fields: [accountId], references: [id])
+
+  @@index([accountId, at(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("audit_log")
+}

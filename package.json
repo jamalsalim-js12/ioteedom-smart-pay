@@ -8,6 +8,8 @@
     "dev:worker": "pnpm --filter worker start:dev",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
+    "db:migrate": "pnpm --filter @ioteedom/db migrate:dev",
+    "db:seed": "pnpm --filter @ioteedom/db seed",
     "build": "turbo build",
     "lint": "turbo lint",
     "start": "turbo start"
@@ -21,7 +23,8 @@
       "@prisma/client",
       "@prisma/engines",
       "prisma",
-      "msgpackr-extract"
+      "msgpackr-extract",
+      "esbuild"
     ]
   }
 }

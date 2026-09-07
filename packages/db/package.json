@@ -14,10 +14,15 @@
     "generate": "prisma generate",
     "build": "prisma generate && tsc",
     "migrate:dev": "prisma migrate dev",
-    "migrate:deploy": "prisma migrate deploy"
+    "migrate:deploy": "prisma migrate deploy",
+    "seed": "node --experimental-strip-types --no-warnings prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "node --experimental-strip-types --no-warnings prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2"
+    "@prisma/client": "^6.16.2",
+    "ulid": "^2.4.0"
   },
   "devDependencies": {
     "prisma": "^6.16.2",
