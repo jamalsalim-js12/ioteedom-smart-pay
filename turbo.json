@@ -6,8 +6,17 @@
       "persistent": true
     },
     "build": {
+      "dependsOn": ["^build", "^generate"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "generate": {
+      "cache": false,
+      "outputs": []
+    },
+    "start:dev": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "cache": false,
+      "persistent": true
     },
     "lint": {},
     "start": {
