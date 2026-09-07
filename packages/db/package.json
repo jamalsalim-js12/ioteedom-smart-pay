@@ -15,17 +15,18 @@
     "build": "prisma generate && tsc",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy",
-    "seed": "node --experimental-strip-types --no-warnings prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "node --experimental-strip-types --no-warnings prisma/seed.ts"
+    "seed": "prisma generate && tsc && node --experimental-strip-types --no-warnings prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.16.2",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "dotenv": "^17.2.2",
+    "pg": "^8.16.3",
     "ulid": "^2.4.0"
   },
   "devDependencies": {
-    "prisma": "^6.16.2",
+    "@types/pg": "^8.15.5",
+    "prisma": "^7.6.0",
     "typescript": "^5.9.2"
   }
 }

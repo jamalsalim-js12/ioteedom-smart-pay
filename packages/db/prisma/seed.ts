@@ -1,7 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "../dist/index.js";
 import { ulid } from "ulid";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 
 const PLACEHOLDER_PIN = "INVITE_PIN_NOT_HASHED_YET";
 
