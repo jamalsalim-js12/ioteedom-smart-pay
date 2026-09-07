@@ -13,12 +13,7 @@ export const PAYMENT_STATUSES = [
 
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const FULFILLMENT_STATUSES = [
-  "not_required",
-  "pending",
-  "succeeded",
-  "failed",
-] as const;
+export const FULFILLMENT_STATUSES = ["not_required", "pending", "succeeded", "failed"] as const;
 
 export type FulfillmentStatus = (typeof FULFILLMENT_STATUSES)[number];
 

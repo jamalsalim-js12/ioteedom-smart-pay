@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { FileText } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReceiptDocket } from "@/components/ui/receipt-dialog";
@@ -18,10 +17,9 @@ export default function ReceiptPrintPage() {
   const docketRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const payment = useDemoStore((s) =>
-    [
-      ...Object.values(s.houses).flatMap((house) => house.payments),
-      ...s.platformPayments,
-    ].find((item) => item.ref === ref),
+    [...Object.values(s.houses).flatMap((house) => house.payments), ...s.platformPayments].find(
+      (item) => item.ref === ref,
+    ),
   );
 
   useEffect(() => {
@@ -36,9 +34,7 @@ export default function ReceiptPrintPage() {
     if (!docketRef.current || !payment || saving) return;
     setSaving(true);
     try {
-      const images = Array.from(
-        docketRef.current.querySelectorAll("img"),
-      ) as HTMLImageElement[];
+      const images = Array.from(docketRef.current.querySelectorAll("img")) as HTMLImageElement[];
       await Promise.all(
         images.map(async (img) => {
           if (img.complete && img.naturalWidth > 0) return;
@@ -90,11 +86,7 @@ export default function ReceiptPrintPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-line bg-card">
-          <EmptyState
-            icon={FileText}
-            title="No receipt"
-            body={`Nothing for ${ref}.`}
-          />
+          <EmptyState icon={FileText} title="No receipt" body={`Nothing for ${ref}.`} />
         </div>
       )}
       <p className="no-print text-center font-mono text-[11px] uppercase tracking-[0.16em] text-mute">

@@ -2,9 +2,9 @@
 
 import { Select } from "@base-ui/react/select";
 import { Check, ChevronDown } from "lucide-react";
-import { type PropertyId } from "@/data/demo";
-import { compactCedis } from "@/lib/format";
+import type { PropertyId } from "@/data/demo";
 import { cn } from "@/lib/cn";
+import { compactCedis } from "@/lib/format";
 import { openAmount, useDemoStore } from "@/lib/store";
 
 export function HouseSwitcher({
@@ -43,9 +43,7 @@ export function HouseSwitcher({
         <p
           className={cn(
             "truncate rounded-lg border px-3 py-2.5 text-sm",
-            dark
-              ? "border-white/15 bg-white/10 text-white"
-              : "border-line bg-field text-ink",
+            dark ? "border-white/15 bg-white/10 text-white" : "border-line bg-field text-ink",
           )}
         >
           {unit ? `${unit.name} · ${current?.label}` : current?.label}

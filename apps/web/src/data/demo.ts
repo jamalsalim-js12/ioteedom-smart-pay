@@ -1,11 +1,4 @@
-export type ServiceId =
-  | "ecg"
-  | "water"
-  | "utilities"
-  | "meters"
-  | "smartHome"
-  | "solar"
-  | "ev";
+export type ServiceId = "ecg" | "water" | "utilities" | "meters" | "smartHome" | "solar" | "ev";
 
 export type PaymentMethod = "mtn" | "telecel" | "at";
 

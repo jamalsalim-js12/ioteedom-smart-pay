@@ -18,10 +18,7 @@ export default function ProfilePage() {
     <div className="enter">
       <Topbar kicker="Account" title="Profile" />
       <div className="flex flex-col gap-5 p-6">
-        <ProfileForm
-          key={activePropertyId}
-          kind={role === "tenant" ? "tenant" : "household"}
-        />
+        <ProfileForm key={activePropertyId} kind={role === "tenant" ? "tenant" : "household"} />
         <Panel>
           <PanelHeader eyebrow="Appearance" title="Theme" />
           <AppearancePanel />

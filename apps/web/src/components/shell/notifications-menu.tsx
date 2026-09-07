@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { useActiveHouse, useDemoStore } from "@/lib/store";
 
@@ -12,11 +12,7 @@ type NotificationItem = {
   at: string;
 };
 
-export function NotificationsMenu({
-  tone = "light",
-}: {
-  tone?: "light" | "dark";
-}) {
+export function NotificationsMenu({ tone = "light" }: { tone?: "light" | "dark" }) {
   const session = useDemoStore((s) => s.session);
   const house = useActiveHouse();
   const platformPayments = useDemoStore((s) => s.platformPayments);

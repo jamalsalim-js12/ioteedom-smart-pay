@@ -1,19 +1,19 @@
 "use client";
 
+import { Car } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Car } from "lucide-react";
-import { AccraMap } from "@/components/ev/accra-map";
 import { EvChart } from "@/components/charts/load";
+import { AccraMap } from "@/components/ev/accra-map";
+import { ModuleOff } from "@/components/shell/module-off";
+import { Topbar } from "@/components/shell/topbar";
 import { AmountDialog } from "@/components/ui/amount-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { ModuleOff } from "@/components/shell/module-off";
-import { Topbar } from "@/components/shell/topbar";
 import { chargerSites, evVehicle, paymentMethods } from "@/data/demo";
-import { compactCedis } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { compactCedis } from "@/lib/format";
 import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
 
 export default function EvPage() {
@@ -28,7 +28,8 @@ export default function EvPage() {
   const topUpWallet = useDemoStore((s) => s.topUpWallet);
   const [topup, setTopup] = useState(false);
   const [selected, setSelected] = useState(
-    chargingSite ?? chargerSites.find((site) => site.status === "online")?.name ??
+    chargingSite ??
+      chargerSites.find((site) => site.status === "online")?.name ??
       chargerSites[0].name,
   );
 
@@ -54,18 +55,13 @@ export default function EvPage() {
     );
   }
 
-  const selectedSite =
-    chargerSites.find((site) => site.name === selected) ?? chargerSites[0];
+  const selectedSite = chargerSites.find((site) => site.name === selected) ?? chargerSites[0];
 
   return (
     <div className="enter">
       <Topbar kicker={evVehicle.plate} title="EV" />
       <div className="flex flex-col gap-5 p-6">
-        <AccraMap
-          selected={selected}
-          chargingSite={chargingSite}
-          onSelect={setSelected}
-        />
+        <AccraMap selected={selected} chargingSite={chargingSite} onSelect={setSelected} />
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-card px-5 py-4">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
@@ -89,9 +85,7 @@ export default function EvPage() {
             </Button>
           ) : (
             <Button
-              disabled={
-                selectedSite.status !== "online" || Boolean(chargingSite)
-              }
+              disabled={selectedSite.status !== "online" || Boolean(chargingSite)}
               onClick={() => runStart(selectedSite.name)}
             >
               Start
@@ -101,15 +95,9 @@ export default function EvPage() {
 
         <div className="grid gap-5 lg:grid-cols-3">
           <Panel className="p-5">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-              Vehicle
-            </p>
-            <p className="mt-2 font-display text-2xl tracking-tight">
-              {evVehicle.model}
-            </p>
-            <p className="mt-3 font-display text-4xl tracking-tight tabular">
-              {batteryPct}%
-            </p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Vehicle</p>
+            <p className="mt-2 font-display text-2xl tracking-tight">{evVehicle.model}</p>
+            <p className="mt-3 font-display text-4xl tracking-tight tabular">{batteryPct}%</p>
             <p className="mt-1 text-sm text-mute">
               {Math.round((batteryPct / 100) * evVehicle.rangeKm)} km estimated
             </p>
@@ -126,15 +114,10 @@ export default function EvPage() {
             </Button>
           </Panel>
           <Panel className="p-5">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-              Legend
-            </p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Legend</p>
             <ul className="mt-3 space-y-3 text-sm">
               {chargerSites.map((site) => (
-                <li
-                  key={site.name}
-                  className="flex items-center justify-between gap-2"
-                >
+                <li key={site.name} className="flex items-center justify-between gap-2">
                   <button
                     type="button"
                     className="text-left"
@@ -183,11 +166,7 @@ export default function EvPage() {
         <Panel>
           <PanelHeader eyebrow="Sessions" title="Paid at the charger" />
           {sessions.length === 0 ? (
-            <EmptyState
-              icon={Car}
-              title="No sessions"
-              body="Paid charging will land here."
-            />
+            <EmptyState icon={Car} title="No sessions" body="Paid charging will land here." />
           ) : (
             <ul className="divide-y divide-line">
               {sessions.map((session) => (
@@ -202,9 +181,7 @@ export default function EvPage() {
                       {paymentMethods.find((m) => m.id === session.method)?.name}
                     </p>
                   </div>
-                  <p className="tabular font-medium">
-                    {compactCedis(session.amount)}
-                  </p>
+                  <p className="tabular font-medium">{compactCedis(session.amount)}</p>
                 </li>
               ))}
             </ul>
@@ -218,10 +195,7 @@ export default function EvPage() {
         onOpenChange={setTopup}
         onConfirm={(amount, method) =>
           new Promise((resolve) => {
-            window.setTimeout(
-              () => resolve(topUpWallet(amount, method).ref),
-              600,
-            );
+            window.setTimeout(() => resolve(topUpWallet(amount, method).ref), 600);
           })
         }
       />

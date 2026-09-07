@@ -73,7 +73,8 @@ export function InviteOwnerDialog({
             Invite a property owner
           </Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-mute">
-            They get a phone and PIN. You choose what they can see. They cannot add modules themselves.
+            They get a phone and PIN. You choose what they can see. They cannot add modules
+            themselves.
           </Dialog.Description>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Field
@@ -113,12 +114,7 @@ export function InviteOwnerDialog({
                 required
               />
             </div>
-            <Field
-              label="City"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              required
-            />
+            <Field label="City" value={city} onChange={(e) => setCity(e.target.value)} required />
           </div>
           <p className="mt-5 mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
             Modules they can see

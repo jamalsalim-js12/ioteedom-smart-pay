@@ -2,10 +2,10 @@
 
 import { toast } from "sonner";
 import { SolarChart } from "@/components/charts/load";
-import { Button } from "@/components/ui/button";
-import { Panel, PanelHeader } from "@/components/ui/panel";
 import { ModuleOff } from "@/components/shell/module-off";
 import { Topbar } from "@/components/shell/topbar";
+import { Button } from "@/components/ui/button";
+import { Panel, PanelHeader } from "@/components/ui/panel";
 import { solarSite } from "@/data/demo";
 import { useDemoStore, useEnabled } from "@/lib/store";
 
@@ -37,18 +37,14 @@ export default function SolarPage() {
           </p>
         </Panel>
         <Panel className="p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            House used
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">House used</p>
           <p className="mt-2 font-display text-4xl tracking-tight tabular">
             {solarSite.usedKwh}
             <span className="ml-1 text-lg text-mute">kWh</span>
           </p>
         </Panel>
         <Panel className="p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            Battery
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Battery</p>
           <p className="mt-2 font-display text-4xl tracking-tight tabular">
             {solarSite.batteryPct}
             <span className="ml-1 text-lg text-mute">%</span>
@@ -58,9 +54,7 @@ export default function SolarPage() {
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
             Export to grid
           </p>
-          <p className="mt-2 font-display text-2xl tracking-tight">
-            {solarExport ? "On" : "Off"}
-          </p>
+          <p className="mt-2 font-display text-2xl tracking-tight">{solarExport ? "On" : "Off"}</p>
           <Button
             className="mt-4"
             size="sm"

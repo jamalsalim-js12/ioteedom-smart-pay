@@ -1,22 +1,16 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
-import {
-  Map,
-  MapControls,
-  MapMarker,
-  MarkerContent,
-  MarkerLabel,
-} from "@/components/ui/map";
+import { useParams } from "next/navigation";
 import { Facts } from "@/components/ops/facts";
 import { Kpi } from "@/components/ops/kpi";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel } from "@/components/ui/map";
 import { Panel, PanelHeader } from "@/components/ui/panel";
+import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
 import { chargerBySlug, routeParam } from "@/lib/ops";
-import { cn } from "@/lib/cn";
 
 export default function OpsChargerDetailPage() {
   const slug = routeParam(useParams<{ slug: string }>().slug);
@@ -28,11 +22,7 @@ export default function OpsChargerDetailPage() {
         <OpsTopbar backHref="/admin/chargers" kicker="Not found" title="Charger" />
         <div className="p-6">
           <Panel>
-            <EmptyState
-              icon={Search}
-              title="No charger here"
-              body={`Nothing matches ${slug}.`}
-            />
+            <EmptyState icon={Search} title="No charger here" body={`Nothing matches ${slug}.`} />
           </Panel>
         </div>
       </div>
@@ -54,11 +44,7 @@ export default function OpsChargerDetailPage() {
             tone={site.status === "online" ? "ok" : "alert"}
           />
           <Kpi label="Sessions today" value={String(site.sessionsToday)} />
-          <Kpi
-            label="Collected today"
-            value={compactCedis(site.collectedToday)}
-            tone="live"
-          />
+          <Kpi label="Collected today" value={compactCedis(site.collectedToday)} tone="live" />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-line bg-card">

@@ -1,15 +1,15 @@
 "use client";
 
-import { platformAccounts, platformChargers } from "@/data/platform";
 import { namedModules } from "@/data/demo";
+import { platformAccounts, platformChargers } from "@/data/platform";
 import {
   AMA_OWNER_ID,
-  openAmount,
-  ownerAccountId,
-  useDemoStore,
   type HouseState,
   type OpsAccountStatus,
+  openAmount,
+  ownerAccountId,
   type Payment,
+  useDemoStore,
 } from "@/lib/store";
 
 export type OpsAccount = (typeof platformAccounts)[number] & {
@@ -112,9 +112,7 @@ export function useOpsSnapshot() {
       phone: opsAccounts[item.id]?.phone || item.phone,
       property: opsAccounts[item.id]?.property || item.property,
       city: opsAccounts[item.id]?.city || item.city,
-      modules: modulesFor(item.id).length
-        ? modulesFor(item.id)
-        : item.modules,
+      modules: modulesFor(item.id).length ? modulesFor(item.id) : item.modules,
       live: false,
       status: opsAccounts[item.id]?.status ?? "active",
     })),
@@ -145,10 +143,7 @@ export function useOpsSnapshot() {
   };
 }
 
-export function propertyLabel(
-  payment: Payment,
-  houses: Record<string, HouseState>,
-) {
+export function propertyLabel(payment: Payment, houses: Record<string, HouseState>) {
   return (
     payment.propertyLabel ||
     Object.values(houses).find((house) => house.id === payment.propertyId)?.label ||

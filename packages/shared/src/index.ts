@@ -1,34 +1,3 @@
-export {
-  MODULE_CATALOG,
-  MODULE_IDS,
-  blankModules,
-  isModuleId,
-  namedModules,
-  type ModuleCatalogEntry,
-  type ModuleId,
-} from "./modules";
-
-export {
-  FULFILLMENT_STATUSES,
-  MOMO_NETWORKS,
-  PAYMENT_RAILS,
-  PAYMENT_STATUSES,
-  isPaymentRail,
-  type FulfillmentStatus,
-  type MomoNetworkId,
-  type PaymentRail,
-  type PaymentStatus,
-} from "./rails";
-
-export {
-  CURRENCY,
-  addPesewas,
-  formatGhs,
-  pesewasFromCedisString,
-  type Currency,
-  type Pesewas,
-} from "./money";
-
 export type {
   AccountKind,
   HealthResponseDto,
@@ -36,3 +5,32 @@ export type {
   PaymentViewDto,
   ProvisionedModulesDto,
 } from "./dto";
+export {
+  blankModules,
+  isModuleId,
+  MODULE_CATALOG,
+  MODULE_IDS,
+  type ModuleCatalogEntry,
+  type ModuleId,
+  namedModules,
+} from "./modules";
+
+export {
+  addPesewas,
+  CURRENCY,
+  type Currency,
+  formatGhs,
+  type Pesewas,
+  pesewasFromCedisString,
+} from "./money";
+export {
+  FULFILLMENT_STATUSES,
+  type FulfillmentStatus,
+  isPaymentRail,
+  MOMO_NETWORKS,
+  type MomoNetworkId,
+  PAYMENT_RAILS,
+  PAYMENT_STATUSES,
+  type PaymentRail,
+  type PaymentStatus,
+} from "./rails";

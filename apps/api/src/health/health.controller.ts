@@ -1,5 +1,5 @@
-import { Controller, Get, ServiceUnavailableException } from "@nestjs/common";
 import type { HealthResponseDto } from "@ioteedom/shared";
+import { Controller, Get, ServiceUnavailableException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Controller("health")

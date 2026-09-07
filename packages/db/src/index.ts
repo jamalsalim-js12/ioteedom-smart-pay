@@ -4,7 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { config as loadEnv } from "dotenv";
 import { PrismaClient } from "./generated/prisma/client";
 
-export { PrismaClient, Prisma } from "./generated/prisma/client";
+export { Prisma, PrismaClient } from "./generated/prisma/client";
 export { newId } from "./id";
 
 function loadDatabaseUrl(): string {

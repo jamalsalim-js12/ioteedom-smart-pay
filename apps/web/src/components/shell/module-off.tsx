@@ -1,18 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { Power } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 
-export function ModuleOff({
-  name,
-  href = "/services",
-}: {
-  name: string;
-  href?: string;
-}) {
+export function ModuleOff({ name, href = "/services" }: { name: string; href?: string }) {
   return (
     <Panel className="mx-6 mt-6">
       <EmptyState

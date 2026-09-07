@@ -4,9 +4,9 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { paymentMethods, type PaymentMethod } from "@/data/demo";
-import { compactCedis } from "@/lib/format";
+import { type PaymentMethod, paymentMethods } from "@/data/demo";
 import { cn } from "@/lib/cn";
+import { compactCedis } from "@/lib/format";
 
 const presets = [50, 100, 200, 500];
 
@@ -47,12 +47,8 @@ export function AmountDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-scrim/45 transition-opacity duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-5 outline-none transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
-          <Dialog.Title className="font-display text-xl tracking-tight">
-            {title}
-          </Dialog.Title>
-          <Dialog.Description className="mt-1 text-sm text-mute">
-            {description}
-          </Dialog.Description>
+          <Dialog.Title className="font-display text-xl tracking-tight">{title}</Dialog.Title>
+          <Dialog.Description className="mt-1 text-sm text-mute">{description}</Dialog.Description>
 
           <div className="mt-5 grid grid-cols-4 gap-2">
             {presets.map((value) => (
@@ -62,9 +58,7 @@ export function AmountDialog({
                 onClick={() => setAmount(value)}
                 className={cn(
                   "h-10 rounded-lg border text-sm tabular transition-colors duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
-                  amount === value
-                    ? "border-ink bg-ink text-on-ink"
-                    : "border-line bg-field",
+                  amount === value ? "border-ink bg-ink text-on-ink" : "border-line bg-field",
                 )}
               >
                 {value}
@@ -90,9 +84,7 @@ export function AmountDialog({
                 onClick={() => setMethod(item.id)}
                 className={cn(
                   "h-11 rounded-lg border text-sm font-medium transition-colors duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
-                  method === item.id
-                    ? "border-ink bg-ink text-on-ink"
-                    : "border-line bg-field",
+                  method === item.id ? "border-ink bg-ink text-on-ink" : "border-line bg-field",
                 )}
               >
                 {item.short}

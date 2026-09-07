@@ -15,10 +15,7 @@ function requiredString(config: Record<string, unknown>, key: string): string {
 
 export function validateEnv(config: Record<string, unknown>): WorkerEnv {
   const nodeEnv = config.NODE_ENV ?? "development";
-  if (
-    typeof nodeEnv !== "string" ||
-    !ENVIRONMENTS.includes(nodeEnv as WorkerEnv["NODE_ENV"])
-  ) {
+  if (typeof nodeEnv !== "string" || !ENVIRONMENTS.includes(nodeEnv as WorkerEnv["NODE_ENV"])) {
     throw new Error("NODE_ENV must be development, production, or test");
   }
 

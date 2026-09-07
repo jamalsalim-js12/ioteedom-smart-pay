@@ -1,19 +1,11 @@
-import { createPrismaClient } from "../dist/index.js";
 import { ulid } from "ulid";
+import { createPrismaClient } from "../dist/index.js";
 
 const prisma = createPrismaClient();
 
 const PLACEHOLDER_PIN = "INVITE_PIN_NOT_HASHED_YET";
 
-const MODULES = [
-  "ecg",
-  "water",
-  "utilities",
-  "meters",
-  "smart_home",
-  "solar",
-  "ev",
-] as const;
+const MODULES = ["ecg", "water", "utilities", "meters", "smart_home", "solar", "ev"] as const;
 
 async function main() {
   const staff = await prisma.staffUser.upsert({
@@ -85,11 +77,7 @@ async function main() {
   });
 }
 
-async function upsertAccount(input: {
-  name: string;
-  kind: "home" | "estate";
-  staffId: string;
-}) {
+async function upsertAccount(input: { name: string; kind: "home" | "estate"; staffId: string }) {
   const existing = await prisma.account.findFirst({
     where: { name: input.name, kind: input.kind },
   });

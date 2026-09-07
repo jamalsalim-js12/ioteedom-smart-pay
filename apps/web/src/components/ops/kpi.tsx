@@ -13,9 +13,7 @@ export function Kpi({
 }) {
   return (
     <article className="rounded-2xl border border-line bg-card p-5">
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-        {label}
-      </p>
+      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">{label}</p>
       <p
         className={cn(
           "mt-2 font-display text-3xl tracking-tight tabular",

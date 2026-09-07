@@ -13,18 +13,14 @@ export function ReceiptDocket({ payment }: { payment: Payment }) {
   const house = useDemoStore((s) =>
     Object.values(s.houses).find((item) => item.id === payment.propertyId),
   );
-  const method =
-    paymentMethods.find((item) => item.id === payment.method)?.name ??
-    payment.method;
+  const method = paymentMethods.find((item) => item.id === payment.method)?.name ?? payment.method;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-line bg-card">
       <div className="docket-pips h-2.5 border-b border-dashed border-line" />
       <div className="px-5 py-5">
         <BrandMark size="sm" />
-        <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-          Receipt
-        </p>
+        <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Receipt</p>
         <p className="mt-2 font-display text-3xl tracking-tight tabular">
           {compactCedis(payment.amount)}
         </p>
@@ -65,9 +61,7 @@ export function ReceiptDialog() {
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-scrim/45 transition-opacity duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-5 outline-none transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
-          <Dialog.Title className="font-display text-xl tracking-tight">
-            Paid
-          </Dialog.Title>
+          <Dialog.Title className="font-display text-xl tracking-tight">Paid</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-mute">
             Keep this docket for your records.
           </Dialog.Description>
@@ -112,12 +106,7 @@ export function ViewReceiptButton({ payment }: { payment: Payment }) {
   const showReceipt = useDemoStore((s) => s.showReceipt);
   if (payment.status !== "success") return null;
   return (
-    <Button
-      size="sm"
-      intent="ghost"
-      className="mt-2"
-      onClick={() => showReceipt(payment)}
-    >
+    <Button size="sm" intent="ghost" className="mt-2" onClick={() => showReceipt(payment)}>
       View receipt
     </Button>
   );

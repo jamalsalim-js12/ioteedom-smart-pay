@@ -4,8 +4,8 @@ import Link from "next/link";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { platformIncidents } from "@/data/platform";
-import { useOpsSnapshot } from "@/lib/ops";
 import { cn } from "@/lib/cn";
+import { useOpsSnapshot } from "@/lib/ops";
 
 const tone = {
   warn: "border-l-alert",
@@ -74,9 +74,7 @@ export default function OpsDevicesPage() {
                 >
                   <p className="font-medium">{item.title}</p>
                   <p className="mt-1 text-sm text-mute">{item.body}</p>
-                  <p className="mt-2 font-mono text-[11px] text-mute">
-                    {item.meta}
-                  </p>
+                  <p className="mt-2 font-mono text-[11px] text-mute">{item.meta}</p>
                 </Link>
               </li>
             ))}

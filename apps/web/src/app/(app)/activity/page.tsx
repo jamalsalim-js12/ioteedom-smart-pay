@@ -1,13 +1,10 @@
 "use client";
 
 import { Car, Receipt, Zap } from "lucide-react";
+import { Topbar } from "@/components/shell/topbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import {
-  ViewReceiptButton,
-  paymentStatusClass,
-} from "@/components/ui/receipt-dialog";
-import { Topbar } from "@/components/shell/topbar";
+import { paymentStatusClass, ViewReceiptButton } from "@/components/ui/receipt-dialog";
 import { paymentMethods } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { useActiveHouse, useDemoStore } from "@/lib/store";
@@ -49,12 +46,8 @@ export default function ActivityPage() {
                       <ViewReceiptButton payment={item} />
                     </div>
                     <div className="text-right">
-                      <p className="tabular font-medium">
-                        {compactCedis(item.amount)}
-                      </p>
-                      <p className={paymentStatusClass(item.status)}>
-                        {item.status}
-                      </p>
+                      <p className="tabular font-medium">{compactCedis(item.amount)}</p>
+                      <p className={paymentStatusClass(item.status)}>{item.status}</p>
                     </div>
                   </div>
                 </li>
@@ -65,54 +58,48 @@ export default function ActivityPage() {
 
         <div className="flex flex-col gap-5">
           {session?.role === "tenant" ? null : (
-          <Panel>
-            <PanelHeader eyebrow="Charging" title="EV sessions" />
-            {sessions.length === 0 ? (
-              <EmptyState
-                icon={Car}
-                title="No sessions"
-                body="Paid charging will land here."
-              />
-            ) : (
-              <ul className="divide-y divide-line">
-                {sessions.map((session) => (
-                  <li
-                    key={`${session.site}-${session.at}`}
-                    className="flex justify-between gap-3 px-5 py-3 text-sm"
-                  >
-                    <span>
-                      {session.site}
-                      <span className="mt-1 block font-mono text-xs text-mute">
-                        {session.at}
+            <Panel>
+              <PanelHeader eyebrow="Charging" title="EV sessions" />
+              {sessions.length === 0 ? (
+                <EmptyState icon={Car} title="No sessions" body="Paid charging will land here." />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {sessions.map((session) => (
+                    <li
+                      key={`${session.site}-${session.at}`}
+                      className="flex justify-between gap-3 px-5 py-3 text-sm"
+                    >
+                      <span>
+                        {session.site}
+                        <span className="mt-1 block font-mono text-xs text-mute">{session.at}</span>
                       </span>
-                    </span>
-                    <span className="tabular">{compactCedis(session.amount)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+                      <span className="tabular">{compactCedis(session.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
           )}
           {session?.role === "tenant" ? null : (
-          <Panel>
-            <PanelHeader eyebrow="House" title="Smart home events" />
-            {houseEvents.length === 0 ? (
-              <EmptyState
-                icon={Zap}
-                title="No events"
-                body="Locks, lights, and climate will log here."
-              />
-            ) : (
-              <ul className="divide-y divide-line">
-                {houseEvents.map((event) => (
-                  <li key={`${event.at}-${event.text}`} className="px-5 py-3 text-sm">
-                    <p className="font-mono text-xs text-mute">{event.at}</p>
-                    <p className="mt-1">{event.text}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+            <Panel>
+              <PanelHeader eyebrow="House" title="Smart home events" />
+              {houseEvents.length === 0 ? (
+                <EmptyState
+                  icon={Zap}
+                  title="No events"
+                  body="Locks, lights, and climate will log here."
+                />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {houseEvents.map((event) => (
+                    <li key={`${event.at}-${event.text}`} className="px-5 py-3 text-sm">
+                      <p className="font-mono text-xs text-mute">{event.at}</p>
+                      <p className="mt-1">{event.text}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
           )}
         </div>
       </div>

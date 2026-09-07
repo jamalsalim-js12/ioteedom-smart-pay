@@ -12,9 +12,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-        {label}
-      </span>
+      <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">{label}</span>
       <input
         {...props}
         className={cn(

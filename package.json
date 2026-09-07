@@ -11,15 +11,25 @@
     "db:migrate": "pnpm --filter @ioteedom/db migrate:dev",
     "db:seed": "pnpm --filter @ioteedom/db seed",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "lint:ci": "biome ci .",
+    "prepare": "husky",
     "start": "turbo start"
   },
+  "lint-staged": {
+    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+  },
   "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0",
     "turbo": "^2.5.4"
   },
   "packageManager": "pnpm@10.15.0",
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@biomejs/biome",
       "@prisma/client",
       "@prisma/engines",
       "prisma",
