@@ -6,6 +6,7 @@ export type AppEnv = {
   REDIS_URL: string;
   API_PORT: number;
   API_CORS_ORIGIN: string;
+  JWT_ACCESS_SECRET: string;
 };
 
 function requiredString(config: Record<string, unknown>, key: string): string {
@@ -28,11 +29,17 @@ export function validateEnv(config: Record<string, unknown>): AppEnv {
     throw new Error("API_PORT must be a positive integer");
   }
 
+  const jwtSecret = requiredString(config, "JWT_ACCESS_SECRET");
+  if (jwtSecret.length < 32) {
+    throw new Error("JWT_ACCESS_SECRET must be at least 32 characters");
+  }
+
   return {
     NODE_ENV: nodeEnv as AppEnv["NODE_ENV"],
     DATABASE_URL: requiredString(config, "DATABASE_URL"),
     REDIS_URL: requiredString(config, "REDIS_URL"),
     API_PORT: port,
     API_CORS_ORIGIN: requiredString(config, "API_CORS_ORIGIN"),
+    JWT_ACCESS_SECRET: jwtSecret,
   };
 }

@@ -34,7 +34,8 @@
       "@prisma/engines",
       "prisma",
       "msgpackr-extract",
-      "esbuild"
+      "esbuild",
+      "argon2"
     ]
   }
 }
