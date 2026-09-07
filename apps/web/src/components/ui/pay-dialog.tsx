@@ -6,46 +6,69 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { paymentMethods, type BillId, type PaymentMethod } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
-import { useActiveHouse, useDemoStore } from "@/lib/store";
+import { railHint } from "@/lib/house";
+import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
 import { cn } from "@/lib/cn";
 
 export function PayDialog({
   billId,
   settleAll = false,
-  unitId = null,
   open,
   onOpenChange,
 }: {
   billId: BillId | null;
   settleAll?: boolean;
-  unitId?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const house = useActiveHouse();
   const bills = house.bills;
-  const enabled = useDemoStore((s) => s.enabled);
+  const enabled = useEnabled();
+  const session = useDemoStore((s) => s.session);
   const payBill = useDemoStore((s) => s.payBill);
   const payAllDue = useDemoStore((s) => s.payAllDue);
-  const payUnit = useDemoStore((s) => s.payUnit);
+  const collectTenantWater = useDemoStore((s) => s.collectTenantWater);
+  const payTenantEcg = useDemoStore((s) => s.payTenantEcg);
   const [method, setMethod] = useState<PaymentMethod>("mtn");
   const [busy, setBusy] = useState(false);
 
+  const tenant = session?.role === "tenant" ? session : null;
+  const unit = tenant
+    ? house.units.find((item) => item.id === tenant.unitId)
+    : null;
   const bill = billId ? bills[billId] : null;
-  const unit = unitId ? house.units.find((item) => item.id === unitId) : null;
   const dueList = (Object.values(bills) as (typeof bills)[BillId][]).filter(
-    (item) => enabled[item.service] && item.due > 0,
+    (item) => {
+      if (!enabled[item.service] || item.due <= 0) return false;
+      if (house.kind === "estate" && item.id === "ecg") return false;
+      return true;
+    },
   );
-  const amount = unit
-    ? Number((unit.ecgDue + unit.waterDue).toFixed(2))
+  const tenantAmount = unit
+    ? settleAll
+      ? Number((unit.ecgDue + unit.waterDue).toFixed(2))
+      : billId === "water"
+        ? unit.waterDue
+        : billId === "ecg"
+          ? unit.ecgDue
+          : 0
+    : 0;
+  const amount = tenant
+    ? tenantAmount
     : settleAll
       ? dueList.reduce((sum, item) => sum + item.due, 0)
       : (bill?.due ?? 0);
-  const title = unit
-    ? `Pay ${unit.name}`
-    : settleAll
-      ? "Pay everything due"
-      : `Pay ${bill?.provider ?? ""}`;
+
+  const destination = tenant
+    ? billId === "water"
+      ? house.ownerName
+      : "ECG"
+    : bill?.destination;
+  const title = settleAll
+    ? "Pay everything due"
+    : tenant && billId === "water"
+      ? `Pay ${house.ownerName}`
+      : `Pay ${destination ?? ""}`;
 
   function confirm() {
     if (amount <= 0) return;
@@ -53,8 +76,17 @@ export function PayDialog({
     const run = new Promise<string>((resolve, reject) => {
       window.setTimeout(() => {
         try {
-          if (unitId) {
-            resolve(payUnit(unitId, method).ref);
+          if (tenant) {
+            if (settleAll) {
+              const paid = payAllDue(method);
+              resolve(paid[0]?.ref ?? "—");
+            } else if (billId === "water") {
+              resolve(collectTenantWater(tenant.unitId, method).ref);
+            } else if (billId === "ecg") {
+              resolve(payTenantEcg(tenant.unitId, method).ref);
+            } else {
+              resolve("—");
+            }
           } else if (settleAll) {
             const paid = payAllDue(method);
             resolve(paid[0]?.ref ?? "—");
@@ -72,11 +104,9 @@ export function PayDialog({
     toast.promise(run, {
       loading: `Sending ${compactCedis(amount)} via ${paymentMethods.find((m) => m.id === method)?.name}…`,
       success: (ref) =>
-        unit
-          ? `Paid ${unit.name}. Ref ${ref}`
-          : settleAll
-            ? `Settled ${dueList.length} bills. Ref ${ref}`
-            : `Paid ${bill?.provider}. Ref ${ref}`,
+        settleAll
+          ? `Settled ${tenant ? "your bills" : `${dueList.length} bills`}. Ref ${ref}`
+          : `Paid ${destination}. Ref ${ref}`,
       error: "Payment did not go through",
     });
 
@@ -86,7 +116,7 @@ export function PayDialog({
     });
   }
 
-  if (!open || (!settleAll && !bill && !unit)) return null;
+  if (!open || (!settleAll && !bill && !tenant)) return null;
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -97,11 +127,19 @@ export function PayDialog({
             {title}
           </Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-mute">
-            {unit
-              ? `${compactCedis(unit.ecgDue)} ECG + ${compactCedis(unit.waterDue)} water.`
-              : settleAll
-                ? `${dueList.length} open bills on this account.`
-                : `${bill?.account} · ${bill?.cycle}.`}
+            {settleAll
+              ? tenant
+                ? "ECG goes to ECG. Water goes to your landlord."
+                : house.kind === "estate"
+                  ? "This remits Ghana Water and any other owner bills. Tenant ECG stays with the tenant."
+                  : `${dueList.length} open bills on this account.`
+              : tenant && billId === "water"
+                ? `${unit?.waterM3 ?? "—"} m³ this cycle. This pays your landlord, not Ghana Water.`
+                : tenant && billId === "ecg"
+                  ? "This goes straight to ECG."
+                  : bill
+                    ? `${railHint(bill)} · ${bill.account} · ${bill.cycle}.`
+                    : ""}
           </Dialog.Description>
 
           <p className="mt-5 font-display text-4xl tracking-tight tabular">

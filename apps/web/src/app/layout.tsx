@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s · IoTeedom Smart Pay",
   },
   description:
-    "Pay ECG and water, watch meters, solar, EV, and the house — from one account.",
+    "Pay ECG direct. Pay water to the owner, who pays Ghana Water. Meters, solar, EV — from one account.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

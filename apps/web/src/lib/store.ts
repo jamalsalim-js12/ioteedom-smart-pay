@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import {
   type BillId,
   type PaymentMethod,
+  type PaymentRail,
   type PaymentStatus,
   type PropertyId,
   type ServiceId,
@@ -15,11 +16,13 @@ import {
   airportUsage,
   alerts,
   chargerSites,
+  defaultEnabled,
   evSessions,
   evVehicle,
   homeEvents,
   initialBills,
   monthlyUsage,
+  namedModules,
   seedPayments,
   type EstateUnit,
   type HouseAlert,
@@ -39,16 +42,22 @@ export type Payment = {
   account?: string;
   propertyId: string;
   propertyLabel?: string;
+  payee: string;
+  rail: PaymentRail;
+  unitId?: string;
 };
 
-export type Role = "household" | "ops";
-
-export type Session = {
-  name: string;
-  phone: string;
-  email: string;
-  role: Role;
-};
+export type Session =
+  | { role: "household"; name: string; phone: string; email: string }
+  | {
+      role: "tenant";
+      name: string;
+      phone: string;
+      email: string;
+      unitId: string;
+      propertyId: PropertyId;
+    }
+  | { role: "ops"; name: string; phone: string; email: string };
 
 export type Profile = {
   name: string;
@@ -76,16 +85,37 @@ export type OpsAccountPatch = {
   property?: string;
   city?: string;
   status?: OpsAccountStatus;
+  modules?: Record<ServiceId, boolean>;
 };
 
 export type OpsActivityEntry = {
   id: string;
   at: string;
   actor: string;
-  action: "account_updated" | "status_changed";
+  action: "account_updated" | "status_changed" | "invited" | "modules_changed";
   accountId: string;
   summary: string;
 };
+
+export type OwnerInvite = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  property: string;
+  city: string;
+  kind: "home" | "estate";
+  modules: Record<ServiceId, boolean>;
+  pin: string;
+  status: "invited" | "active";
+  invitedAt: string;
+};
+
+export const AMA_OWNER_ID = "east-legon";
+
+export function ownerAccountId(accountId: string) {
+  return accountId === "airport" ? AMA_OWNER_ID : accountId;
+}
 
 export type BillState = (typeof initialBills)[BillId];
 
@@ -94,11 +124,13 @@ export type HouseState = {
   label: string;
   address: string;
   kind: "home" | "estate";
+  ownerName: string;
   lastSeen: string;
   units: EstateUnit[];
   bills: Record<BillId, BillState>;
   payments: Payment[];
   wallet: number;
+  waterCollected: number;
   usage: UsageMonth[];
   alerts: HouseAlert[];
   leakResolved: boolean;
@@ -114,8 +146,20 @@ export function openAmount(house: HouseState) {
 
 export const DEMO_PHONE = "0244128891";
 export const DEMO_PIN = "2468";
+export const TENANT_PHONE = "0245556677";
+export const TENANT_PIN = "3579";
 export const OPS_PHONE = "0201112233";
 export const OPS_PIN = "1357";
+
+export const tenantEnabled: Record<ServiceId, boolean> = {
+  ecg: true,
+  water: true,
+  utilities: false,
+  meters: true,
+  smartHome: false,
+  solar: false,
+  ev: false,
+};
 
 const allOff: Record<ServiceId, boolean> = {
   ecg: false,
@@ -155,6 +199,9 @@ function withProperty(
     at: string;
     ref: string;
     id: string;
+    payee: string;
+    rail: PaymentRail;
+    unitId?: string;
   }[],
   propertyId: PropertyId,
   bills: Record<BillId, BillState>,
@@ -163,6 +210,9 @@ function withProperty(
     ...item,
     propertyId,
     account: bills[item.billId]?.account,
+    payee: item.payee,
+    rail: item.rail,
+    unitId: item.unitId,
   }));
 }
 
@@ -173,11 +223,13 @@ function seedHouses(): Record<PropertyId, HouseState> {
       label: "East Legon",
       address: "12 Boundary Rd, East Legon",
       kind: "home",
+      ownerName: "Ama Mensah",
       lastSeen: "18 Aug, 21:14",
       units: [],
       bills: structuredClone(initialBills),
       payments: withProperty(seedPayments, "east-legon", structuredClone(initialBills)),
       wallet: evVehicle.wallet,
+      waterCollected: 0,
       usage: structuredClone(monthlyUsage),
       alerts: structuredClone(alerts),
       leakResolved: false,
@@ -188,17 +240,52 @@ function seedHouses(): Record<PropertyId, HouseState> {
       label: "Airport Residential",
       address: "8 Liberia Rd, Airport Residential",
       kind: "estate",
+      ownerName: "Ama Mensah",
       lastSeen: "18 Aug, 09:02",
       units: structuredClone(airportUnits),
       bills: structuredClone(airportBills),
       payments: withProperty(airportPayments, "airport", structuredClone(airportBills)),
       wallet: 420,
+      waterCollected: 110,
       usage: structuredClone(airportUsage),
       alerts: structuredClone(airportAlerts),
       leakResolved: true,
       dismissedAlerts: [],
     },
   };
+}
+
+function normalizeUnit(unit: Partial<EstateUnit>, index: number): EstateUnit {
+  return {
+    id: unit.id ?? `u${index + 1}`,
+    name: unit.name ?? `Unit ${index + 1}`,
+    tenant: unit.tenant ?? "Tenant",
+    ecgDue: unit.ecgDue ?? 0,
+    waterDue: unit.waterDue ?? 0,
+    waterM3: unit.waterM3 ?? 0,
+  };
+}
+
+function normalizePayment(item: Payment): Payment {
+  const payee =
+    item.payee ||
+    (item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—");
+  return {
+    ...item,
+    payee,
+    rail: item.rail ?? "direct",
+  };
+}
+
+function seedPlatform(): Payment[] {
+  return structuredClone(seedPlatformPayments).map((item) =>
+    normalizePayment({
+      ...item,
+      payee:
+        item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—",
+      rail: "direct",
+    }),
+  );
 }
 
 function withHouseDefaults(
@@ -208,9 +295,11 @@ function withHouseDefaults(
   return {
     ...seed,
     ...house,
-    units: house?.units ?? seed.units,
+    ownerName: house?.ownerName ?? seed.ownerName,
+    waterCollected: house?.waterCollected ?? seed.waterCollected,
+    units: (house?.units ?? seed.units).map(normalizeUnit),
     bills: house?.bills ?? seed.bills,
-    payments: house?.payments ?? seed.payments,
+    payments: (house?.payments ?? seed.payments).map(normalizePayment),
     usage: house?.usage ?? seed.usage,
     alerts: house?.alerts ?? seed.alerts,
     leakResolved: house?.leakResolved ?? seed.leakResolved,
@@ -248,6 +337,10 @@ type Store = {
   solarExport: boolean;
   opsAccounts: Record<string, OpsAccountPatch>;
   opsActivityLog: OpsActivityEntry[];
+  ownerInvites: OwnerInvite[];
+  accountModules: Record<string, Record<ServiceId, boolean>>;
+  onboardedByAccount: Record<string, boolean>;
+  activeOwnerId: string;
   markHydrated: () => void;
   signUp: (input: { name: string; phone: string; email: string; pin: string }) => void;
   signIn: (phone: string, pin: string) => string | null;
@@ -258,17 +351,26 @@ type Store = {
   completeOnboarding: (input: {
     property: string;
     city: string;
-    enabled: Record<ServiceId, boolean>;
     ecgAccount?: string;
     waterAccount?: string;
   }) => void;
   updateProfile: (input: Profile) => void;
-  toggleService: (id: ServiceId) => void;
+  setAccountModules: (accountId: string, modules: Record<ServiceId, boolean>) => void;
+  inviteOwner: (input: {
+    name: string;
+    phone: string;
+    email: string;
+    property: string;
+    city: string;
+    kind: "home" | "estate";
+    modules: Record<ServiceId, boolean>;
+  }) => OwnerInvite;
   toggleDevice: (id: string) => void;
   setAcTemp: (temp: number) => void;
   payBill: (billId: BillId, amount: number, method: PaymentMethod) => Payment;
   payAllDue: (method: PaymentMethod) => Payment[];
-  payUnit: (unitId: string, method: PaymentMethod) => Payment;
+  collectTenantWater: (unitId: string, method: PaymentMethod) => Payment;
+  payTenantEcg: (unitId: string, method: PaymentMethod) => Payment;
   topUpEcg: (amount: number, method: PaymentMethod) => Payment;
   topUpWallet: (amount: number, method: PaymentMethod) => Payment;
   retryPayment: (id: string) => Payment | null;
@@ -300,10 +402,11 @@ const initialState = {
     property: "",
     city: "Accra",
   },
-  enabled: { ...allOff },
+  enabled: { ...defaultEnabled },
   houses: seedHouses(),
   activePropertyId: "east-legon" as PropertyId,
-  platformPayments: structuredClone(seedPlatformPayments) as Payment[],
+  activeOwnerId: AMA_OWNER_ID,
+  platformPayments: seedPlatform(),
   receipt: null as Payment | null,
   devicesOn: {
     lock: true,
@@ -321,6 +424,12 @@ const initialState = {
   solarExport: false,
   opsAccounts: {},
   opsActivityLog: [],
+  ownerInvites: [] as OwnerInvite[],
+  accountModules: { [AMA_OWNER_ID]: { ...defaultEnabled } } as Record<
+    string,
+    Record<ServiceId, boolean>
+  >,
+  onboardedByAccount: { [AMA_OWNER_ID]: true } as Record<string, boolean>,
 };
 
 function activeHouse(state: { houses: Record<PropertyId, HouseState>; activePropertyId: PropertyId }) {
@@ -337,6 +446,94 @@ function patchHouse(
       houses: { ...state.houses, [id]: updater(state.houses[id]) },
     };
   });
+}
+
+function settlePayment(
+  house: HouseState,
+  payment: Payment,
+  direction: "apply" | "reverse",
+): HouseState {
+  const add = direction === "apply";
+  const amount = payment.amount;
+  const topUp = /top-?up/i.test(payment.label);
+
+  if (payment.billId === "wallet") {
+    const wallet = Number((house.wallet + (add ? amount : -amount)).toFixed(2));
+    return { ...house, wallet: Math.max(0, wallet) };
+  }
+  if (topUp && payment.billId === "ecg") {
+    const credit = Number(
+      ((house.bills.ecg.credit ?? 0) + (add ? amount : -amount)).toFixed(2),
+    );
+    return {
+      ...house,
+      bills: {
+        ...house.bills,
+        ecg: { ...house.bills.ecg, credit: Math.max(0, credit) },
+      },
+    };
+  }
+  if (payment.rail === "collect" && payment.unitId) {
+    return {
+      ...house,
+      waterCollected: Number(
+        Math.max(0, house.waterCollected + (add ? amount : -amount)).toFixed(2),
+      ),
+      units: house.units.map((unit) =>
+        unit.id === payment.unitId
+          ? {
+              ...unit,
+              waterDue: Number(
+                Math.max(0, unit.waterDue + (add ? -amount : amount)).toFixed(2),
+              ),
+            }
+          : unit,
+      ),
+    };
+  }
+  if (payment.rail === "remit") {
+    return {
+      ...house,
+      waterCollected: Number(
+        Math.max(0, house.waterCollected + (add ? -amount : amount)).toFixed(2),
+      ),
+      bills: {
+        ...house.bills,
+        water: {
+          ...house.bills.water,
+          due: Number(
+            Math.max(0, house.bills.water.due + (add ? -amount : amount)).toFixed(2),
+          ),
+        },
+      },
+    };
+  }
+  if (payment.unitId && payment.billId === "ecg") {
+    return {
+      ...house,
+      units: house.units.map((unit) =>
+        unit.id === payment.unitId
+          ? {
+              ...unit,
+              ecgDue: Number(
+                Math.max(0, unit.ecgDue + (add ? -amount : amount)).toFixed(2),
+              ),
+            }
+          : unit,
+      ),
+    };
+  }
+  const bill = house.bills[payment.billId];
+  return {
+    ...house,
+    bills: {
+      ...house.bills,
+      [payment.billId]: {
+        ...bill,
+        due: Number(Math.max(0, bill.due + (add ? -amount : amount)).toFixed(2)),
+      },
+    },
+  };
 }
 
 export const useDemoStore = create<Store>()(
@@ -356,6 +553,7 @@ export const useDemoStore = create<Store>()(
           session: { name, phone, email, role: "household" },
           pin,
           onboarded: false,
+          activeOwnerId: `self_${digits(phone)}`,
           profile: {
             name,
             phone,
@@ -370,17 +568,41 @@ export const useDemoStore = create<Store>()(
         const clean = digits(phone);
         const ops = clean === digits(OPS_PHONE) && pin === OPS_PIN;
         const demo = clean === digits(DEMO_PHONE) && pin === DEMO_PIN;
+        const tenant = clean === digits(TENANT_PHONE) && pin === TENANT_PIN;
+        const invite = state.ownerInvites.find(
+          (item) => digits(item.phone) === clean && item.pin === pin,
+        );
         const mine =
           digits(state.profile.phone || state.session?.phone || "") === clean &&
           pin === state.pin &&
-          state.session?.role !== "ops";
+          state.session?.role === "household";
 
         const suspended = (id: string) =>
           (state.opsAccounts[id]?.status ?? "active") === "suspended";
 
-        if (!ops && !demo && !mine) return "Phone or PIN does not match.";
+        if (!ops && !demo && !tenant && !invite && !mine) {
+          return "Phone or PIN does not match.";
+        }
         if ((demo || mine) && suspended("east-legon")) {
           return "This account is suspended. Contact support.";
+        }
+        if (invite && suspended(invite.id)) {
+          return "This account is suspended. Contact support.";
+        }
+
+        if (tenant) {
+          set({
+            session: {
+              role: "tenant",
+              name: "Kojo Boateng",
+              phone: "024 555 6677",
+              email: "kojo.boateng@email.com",
+              unitId: "u2",
+              propertyId: "airport",
+            },
+            activePropertyId: "airport",
+          });
+          return null;
         }
 
         if (ops) {
@@ -403,8 +625,35 @@ export const useDemoStore = create<Store>()(
           return null;
         }
 
-        if (demo && (!get().session || get().session?.role === "ops")) {
+        if (invite) {
+          const modules =
+            state.accountModules[invite.id] ?? invite.modules;
+          set({
+            session: {
+              role: "household",
+              name: invite.name,
+              phone: invite.phone,
+              email: invite.email,
+            },
+            pin: invite.pin,
+            activeOwnerId: invite.id,
+            onboarded: Boolean(state.onboardedByAccount[invite.id]),
+            enabled: { ...modules },
+            profile: {
+              name: invite.name,
+              phone: invite.phone,
+              email: invite.email,
+              property: invite.property,
+              city: invite.city,
+            },
+          });
+          return null;
+        }
+
+        if (demo) {
           const house = get().houses[get().activePropertyId];
+          const modules =
+            get().accountModules[AMA_OWNER_ID] ?? get().enabled;
           set({
             session: {
               name: "Ama Mensah",
@@ -416,12 +665,15 @@ export const useDemoStore = create<Store>()(
               name: "Ama Mensah",
               phone: "024 412 8891",
               email: "ama.mensah@email.com",
-              property: get().onboarded
+              property: get().onboardedByAccount[AMA_OWNER_ID]
                 ? get().profile.property || house.address
-                : get().profile.property,
+                : get().profile.property || house.address,
               city: get().profile.city || "Accra",
             },
             pin: DEMO_PIN,
+            activeOwnerId: AMA_OWNER_ID,
+            enabled: { ...modules },
+            onboarded: Boolean(get().onboardedByAccount[AMA_OWNER_ID] || get().onboarded),
           });
           return null;
         }
@@ -441,7 +693,7 @@ export const useDemoStore = create<Store>()(
         set({
           ...structuredClone(initialState),
           houses: seedHouses(),
-          platformPayments: structuredClone(seedPlatformPayments) as Payment[],
+          platformPayments: seedPlatform(),
           hydrated: true,
         }),
       updateProfile: (input) =>
@@ -453,7 +705,7 @@ export const useDemoStore = create<Store>()(
             property: input.property.trim(),
             city: input.city.trim(),
           };
-          const household = state.session?.role !== "ops";
+          const household = state.session?.role === "household";
           const id = state.activePropertyId;
           const house = state.houses[id];
           return {
@@ -478,15 +730,21 @@ export const useDemoStore = create<Store>()(
       completeOnboarding: ({
         property,
         city,
-        enabled,
         ecgAccount,
         waterAccount,
       }) =>
         set((state) => {
           const east = state.houses["east-legon"];
+          const ownerId = state.activeOwnerId || AMA_OWNER_ID;
           return {
             onboarded: true,
-            enabled,
+            onboardedByAccount: {
+              ...state.onboardedByAccount,
+              [ownerId]: true,
+            },
+            ownerInvites: state.ownerInvites.map((item) =>
+              item.id === ownerId ? { ...item, status: "active" as const } : item,
+            ),
             activePropertyId: "east-legon",
             profile: { ...state.profile, property, city },
             houses: {
@@ -509,10 +767,72 @@ export const useDemoStore = create<Store>()(
             },
           };
         }),
-      toggleService: (id) =>
+      setAccountModules: (accountId, modules) =>
+        set((state) => {
+          const ownerId = ownerAccountId(accountId);
+          const nextModules = { ...modules };
+          const signedIn = state.session?.role === "household" && state.activeOwnerId === ownerId;
+          return {
+            accountModules: { ...state.accountModules, [ownerId]: nextModules },
+            ownerInvites: state.ownerInvites.map((item) =>
+              item.id === ownerId ? { ...item, modules: nextModules } : item,
+            ),
+            opsAccounts: {
+              ...state.opsAccounts,
+              [ownerId]: {
+                ...(state.opsAccounts[ownerId] ?? {}),
+                modules: nextModules,
+              },
+            },
+            enabled:
+              (ownerId === AMA_OWNER_ID && state.session?.role === "household") ||
+              signedIn
+                ? nextModules
+                : state.enabled,
+            opsActivityLog: [
+              {
+                id: `ops-log-${Date.now()}`,
+                at: stamp(),
+                actor: state.session?.name || "Operator",
+                action: "modules_changed",
+                accountId: ownerId,
+                summary: `Updated modules for ${ownerId}`,
+              },
+              ...state.opsActivityLog,
+            ],
+          };
+        }),
+      inviteOwner: ({ name, phone, email, property, city, kind, modules }) => {
+        const invite: OwnerInvite = {
+          id: `own_${Date.now()}`,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          property: property.trim(),
+          city: city.trim(),
+          kind,
+          modules: { ...modules },
+          pin: String(1000 + Math.floor(Math.random() * 9000)),
+          status: "invited",
+          invitedAt: stamp(),
+        };
         set((state) => ({
-          enabled: { ...state.enabled, [id]: !state.enabled[id] },
-        })),
+          ownerInvites: [invite, ...state.ownerInvites],
+          accountModules: { ...state.accountModules, [invite.id]: { ...modules } },
+          opsActivityLog: [
+            {
+              id: `ops-log-${Date.now()}`,
+              at: stamp(),
+              actor: state.session?.name || "Operator",
+              action: "invited",
+              accountId: invite.id,
+              summary: `Invited ${invite.name} · ${namedModules(modules).join(", ") || "no modules"}`,
+            },
+            ...state.opsActivityLog,
+          ],
+        }));
+        return invite;
+      },
       toggleDevice: (id) => {
         const next = !get().devicesOn[id];
         const labels: Record<string, [string, string]> = {
@@ -544,10 +864,13 @@ export const useDemoStore = create<Store>()(
       payBill: (billId, amount, method) => {
         const house = activeHouse(get());
         const bill = house.bills[billId];
+        const remitting = house.kind === "estate" && billId === "water";
         const payment: Payment = {
           id: `pmt_${Date.now()}_${billId}`,
           billId,
-          label: `${bill.provider} · ${bill.cycle}`,
+          label: remitting
+            ? `Ghana Water · ${bill.cycle}`
+            : `${bill.destination} · ${bill.cycle}`,
           amount,
           method,
           status: "success",
@@ -556,6 +879,8 @@ export const useDemoStore = create<Store>()(
           account: bill.account,
           propertyId: house.id,
           propertyLabel: house.label,
+          payee: bill.destination,
+          rail: bill.rail,
         };
         patchHouse(set, (current) => ({
           ...current,
@@ -566,40 +891,81 @@ export const useDemoStore = create<Store>()(
               due: Math.max(0, Number((current.bills[billId].due - amount).toFixed(2))),
             },
           },
+          waterCollected: remitting
+            ? Math.max(0, Number((current.waterCollected - amount).toFixed(2)))
+            : current.waterCollected,
           payments: [payment, ...current.payments],
         }));
         set({ receipt: payment });
         return payment;
       },
       payAllDue: (method) => {
+        const session = get().session;
+        if (session?.role === "tenant") {
+          const house = activeHouse(get());
+          const unit = house.units.find((item) => item.id === session.unitId);
+          const paid: Payment[] = [];
+          if (unit && unit.ecgDue > 0) paid.push(get().payTenantEcg(session.unitId, method));
+          if (unit && unit.waterDue > 0) {
+            paid.push(get().collectTenantWater(session.unitId, method));
+          }
+          return paid;
+        }
         const { enabled, payBill } = get();
         const house = activeHouse(get());
-        const paid = (Object.values(house.bills) as BillState[])
-          .filter((bill) => enabled[bill.service] && bill.due > 0)
+        return (Object.values(house.bills) as BillState[])
+          .filter((bill) => {
+            if (!enabled[bill.service] || bill.due <= 0) return false;
+            if (house.kind === "estate" && bill.id === "ecg") return false;
+            return true;
+          })
           .map((bill) => payBill(bill.id, bill.due, method));
-        if (house.kind === "estate") {
-          patchHouse(set, (current) => ({
-            ...current,
-            units: current.units.map((unit) => ({
-              ...unit,
-              ecgDue: 0,
-              waterDue: 0,
-            })),
-          }));
-        }
-        return paid;
       },
-      payUnit: (unitId, method) => {
+      collectTenantWater: (unitId, method) => {
         const house = activeHouse(get());
         const unit = house.units.find((item) => item.id === unitId);
         if (!unit) {
           throw new Error("Unit not found");
         }
-        const amount = Number((unit.ecgDue + unit.waterDue).toFixed(2));
+        const amount = unit.waterDue;
         const payment: Payment = {
-          id: `pmt_${Date.now()}_${unitId}`,
+          id: `pmt_${Date.now()}_${unitId}_water`,
+          billId: "water",
+          label: `${unit.name} · water to ${house.ownerName}`,
+          amount,
+          method,
+          status: "success",
+          at: stamp(),
+          ref: makeRef(),
+          account: `${unit.name} · ${house.label}`,
+          propertyId: house.id,
+          propertyLabel: house.label,
+          payee: house.ownerName,
+          rail: "collect",
+          unitId,
+        };
+        patchHouse(set, (current) => ({
+          ...current,
+          units: current.units.map((item) =>
+            item.id === unitId ? { ...item, waterDue: 0 } : item,
+          ),
+          waterCollected: Number((current.waterCollected + amount).toFixed(2)),
+          payments: [payment, ...current.payments],
+        }));
+        set({ receipt: payment });
+        return payment;
+      },
+      payTenantEcg: (unitId, method) => {
+        const house = activeHouse(get());
+        const unit = house.units.find((item) => item.id === unitId);
+        if (!unit) {
+          throw new Error("Unit not found");
+        }
+        const amount = unit.ecgDue;
+        const payment: Payment = {
+          id: `pmt_${Date.now()}_${unitId}_ecg`,
           billId: "ecg",
-          label: `${unit.name} · ECG + water`,
+          label: `${unit.name} · ECG`,
           amount,
           method,
           status: "success",
@@ -608,23 +974,15 @@ export const useDemoStore = create<Store>()(
           account: house.bills.ecg.account,
           propertyId: house.id,
           propertyLabel: house.label,
+          payee: "ECG",
+          rail: "direct",
+          unitId,
         };
         patchHouse(set, (current) => ({
           ...current,
           units: current.units.map((item) =>
-            item.id === unitId ? { ...item, ecgDue: 0, waterDue: 0 } : item,
+            item.id === unitId ? { ...item, ecgDue: 0 } : item,
           ),
-          bills: {
-            ...current.bills,
-            ecg: {
-              ...current.bills.ecg,
-              due: Math.max(0, Number((current.bills.ecg.due - unit.ecgDue).toFixed(2))),
-            },
-            water: {
-              ...current.bills.water,
-              due: Math.max(0, Number((current.bills.water.due - unit.waterDue).toFixed(2))),
-            },
-          },
           payments: [payment, ...current.payments],
         }));
         set({ receipt: payment });
@@ -644,6 +1002,8 @@ export const useDemoStore = create<Store>()(
           account: house.bills.ecg.account,
           propertyId: house.id,
           propertyLabel: house.label,
+          payee: "ECG",
+          rail: "direct",
         };
         patchHouse(set, (current) => ({
           ...current,
@@ -672,6 +1032,8 @@ export const useDemoStore = create<Store>()(
           ref: makeRef(),
           propertyId: house.id,
           propertyLabel: house.label,
+          payee: "EV wallet",
+          rail: "direct",
         };
         patchHouse(set, (current) => ({
           ...current,
@@ -695,35 +1057,9 @@ export const useDemoStore = create<Store>()(
             ref: makeRef(),
           };
           found = next;
-          const topUp = /top-?up/i.test(payment.label);
-          let bills = house.bills;
-          let wallet = house.wallet;
-          if (payment.billId === "wallet") {
-            wallet = Number((house.wallet + payment.amount).toFixed(2));
-          } else if (topUp && payment.billId === "ecg") {
-            bills = {
-              ...house.bills,
-              ecg: {
-                ...house.bills.ecg,
-                credit: Number(
-                  ((house.bills.ecg.credit ?? 0) + payment.amount).toFixed(2),
-                ),
-              },
-            };
-          } else {
-            const bill = house.bills[payment.billId];
-            bills = {
-              ...house.bills,
-              [payment.billId]: {
-                ...bill,
-                due: Math.max(0, Number((bill.due - payment.amount).toFixed(2))),
-              },
-            };
-          }
+          const settled = settlePayment(house, payment, "apply");
           houses[key] = {
-            ...house,
-            bills,
-            wallet,
+            ...settled,
             payments: house.payments.map((item) => (item.id === id ? next : item)),
           };
         }
@@ -755,29 +1091,9 @@ export const useDemoStore = create<Store>()(
           if (!payment || payment.status !== "success") continue;
           const next: Payment = { ...payment, status: "refunded" };
           found = next;
-          const topUp = /top-?up/i.test(payment.label);
-          const bills = { ...house.bills };
-          let wallet = house.wallet;
-          if (payment.billId === "wallet") {
-            wallet = Number(Math.max(0, house.wallet - payment.amount).toFixed(2));
-          } else if (topUp && payment.billId === "ecg") {
-            bills.ecg = {
-              ...bills.ecg,
-              credit: Number(
-                Math.max(0, (bills.ecg.credit ?? 0) - payment.amount).toFixed(2),
-              ),
-            };
-          } else {
-            const bill = bills[payment.billId];
-            bills[payment.billId] = {
-              ...bill,
-              due: Number((bill.due + payment.amount).toFixed(2)),
-            };
-          }
+          const settled = settlePayment(house, payment, "reverse");
           houses[key] = {
-            ...house,
-            bills,
-            wallet,
+            ...settled,
             payments: house.payments.map((item) => (item.id === id ? next : item)),
           };
         }
@@ -951,8 +1267,8 @@ export const useDemoStore = create<Store>()(
         ].sort((a, b) => (a.at < b.at ? 1 : -1)),
     }),
     {
-      name: "ioteedom-demo-v4",
-      version: 6,
+      name: "ioteedom-demo-v6",
+      version: 8,
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<Store>;
         return {
@@ -961,6 +1277,11 @@ export const useDemoStore = create<Store>()(
           houses: normalizeHouses(persisted.houses ?? currentState.houses),
           opsAccounts: persisted.opsAccounts ?? currentState.opsAccounts,
           opsActivityLog: persisted.opsActivityLog ?? currentState.opsActivityLog,
+          ownerInvites: persisted.ownerInvites ?? currentState.ownerInvites,
+          accountModules: persisted.accountModules ?? currentState.accountModules,
+          onboardedByAccount:
+            persisted.onboardedByAccount ?? currentState.onboardedByAccount,
+          activeOwnerId: persisted.activeOwnerId ?? currentState.activeOwnerId,
         };
       },
       partialize: (state) => ({
@@ -981,6 +1302,10 @@ export const useDemoStore = create<Store>()(
         solarExport: state.solarExport,
         opsAccounts: state.opsAccounts,
         opsActivityLog: state.opsActivityLog,
+        ownerInvites: state.ownerInvites,
+        accountModules: state.accountModules,
+        onboardedByAccount: state.onboardedByAccount,
+        activeOwnerId: state.activeOwnerId,
       }),
       onRehydrateStorage: () => () => {
         useDemoStore.getState().markHydrated();
@@ -995,4 +1320,23 @@ export function useActiveHouse() {
   const house = houses[id] ?? houses["east-legon"];
   if (house?.alerts && house.dismissedAlerts && house.usage) return house;
   return normalizeHouses(houses)[id] ?? normalizeHouses(houses)["east-legon"];
+}
+
+export function useEnabled() {
+  const role = useDemoStore((s) => s.session?.role);
+  const enabled = useDemoStore((s) => s.enabled);
+  if (role !== "tenant") return enabled;
+  return {
+    ...tenantEnabled,
+    ecg: enabled.ecg,
+    water: enabled.water,
+    meters: enabled.meters,
+  };
+}
+
+export function useTenantUnit() {
+  const session = useDemoStore((s) => s.session);
+  const house = useActiveHouse();
+  if (session?.role !== "tenant") return null;
+  return house.units.find((unit) => unit.id === session.unitId) ?? null;
 }

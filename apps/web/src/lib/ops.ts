@@ -1,8 +1,11 @@
 "use client";
 
 import { platformAccounts, platformChargers } from "@/data/platform";
+import { namedModules } from "@/data/demo";
 import {
+  AMA_OWNER_ID,
   openAmount,
+  ownerAccountId,
   useDemoStore,
   type HouseState,
   type OpsAccountStatus,
@@ -12,6 +15,8 @@ import {
 export type OpsAccount = (typeof platformAccounts)[number] & {
   live: boolean;
   status: OpsAccountStatus;
+  inviteStatus?: "invited" | "active";
+  pin?: string;
 };
 
 export function chargerSlug(name: string) {
@@ -35,9 +40,20 @@ export function useOpsSnapshot() {
   const profile = useDemoStore((s) => s.profile);
   const platformPayments = useDemoStore((s) => s.platformPayments);
   const opsAccounts = useDemoStore((s) => s.opsAccounts);
+  const ownerInvites = useDemoStore((s) => s.ownerInvites);
+  const accountModules = useDemoStore((s) => s.accountModules);
+  const enabled = useDemoStore((s) => s.enabled);
   const east = houses["east-legon"];
   const airport = houses.airport;
   const leakResolved = east.leakResolved;
+
+  function modulesFor(id: string) {
+    const ownerId = ownerAccountId(id);
+    const fromStore = accountModules[ownerId] ?? opsAccounts[ownerId]?.modules;
+    if (fromStore) return namedModules(fromStore);
+    if (ownerId === AMA_OWNER_ID) return namedModules(enabled);
+    return [];
+  }
 
   const accounts: OpsAccount[] = [
     {
@@ -49,7 +65,7 @@ export function useOpsSnapshot() {
       city: opsAccounts["east-legon"]?.city || profile.city || "Accra",
       lastSeen: east.lastSeen,
       open: openAmount(east),
-      modules: ["ECG", "Water", "Waste", "Fibre"],
+      modules: modulesFor("east-legon"),
       note: leakResolved
         ? "Leak watch on WM-110384 is cleared."
         : "Water meter WM-110384 is on leak watch.",
@@ -66,17 +82,39 @@ export function useOpsSnapshot() {
       lastSeen: airport.lastSeen,
       open: openAmount(airport),
       units: airport.units.length,
-      modules: ["ECG", "Water", "Waste"],
-      note: "Four units share a combined ECG and water docket.",
+      modules: modulesFor("airport"),
+      note: "Four units. Tenants pay ECG. Owner collects water, then remits to Ghana Water.",
       live: true,
       status: opsAccounts.airport?.status ?? "active",
     },
+    ...ownerInvites.map((invite) => ({
+      id: invite.id,
+      name: invite.name,
+      phone: invite.phone,
+      kind: invite.kind,
+      property: invite.property,
+      city: invite.city,
+      lastSeen: invite.status === "invited" ? "Invite sent" : invite.invitedAt,
+      open: 0,
+      modules: namedModules(accountModules[invite.id] ?? invite.modules),
+      note:
+        invite.status === "invited"
+          ? `Waiting to sign in · PIN ${invite.pin}`
+          : "Signed in. Modules stay under superadmin control.",
+      live: invite.status === "active",
+      status: opsAccounts[invite.id]?.status ?? "active",
+      inviteStatus: invite.status,
+      pin: invite.status === "invited" ? invite.pin : undefined,
+    })),
     ...platformAccounts.map((item) => ({
       ...item,
       name: opsAccounts[item.id]?.name || item.name,
       phone: opsAccounts[item.id]?.phone || item.phone,
       property: opsAccounts[item.id]?.property || item.property,
       city: opsAccounts[item.id]?.city || item.city,
+      modules: modulesFor(item.id).length
+        ? modulesFor(item.id)
+        : item.modules,
       live: false,
       status: opsAccounts[item.id]?.status ?? "active",
     })),

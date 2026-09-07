@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { useActiveHouse, useDemoStore } from "@/lib/store";
 
-export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
+export function ProfileForm({ kind }: { kind: "household" | "ops" | "tenant" }) {
   const profile = useDemoStore((s) => s.profile);
   const session = useDemoStore((s) => s.session);
   const updateProfile = useDemoStore((s) => s.updateProfile);
@@ -19,6 +19,16 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
   const [property, setProperty] = useState(profile.property);
   const [city, setCity] = useState(profile.city || "Accra");
   const ops = kind === "ops";
+  const tenant = kind === "tenant";
+  const unit =
+    session?.role === "tenant"
+      ? house.units.find((item) => item.id === session.unitId)
+      : null;
+  const propertyValue = tenant
+    ? unit
+      ? `${unit.name} · ${house.label}`
+      : house.label
+    : property;
 
   const next = {
     name: name.trim(),
@@ -51,7 +61,7 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
           eyebrow="Settings"
           title="Your details"
           action={
-            <Button type="submit" size="sm" disabled={!dirty || !ready}>
+            <Button type="submit" size="sm" disabled={!dirty || !ready || tenant}>
               Save
             </Button>
           }
@@ -63,6 +73,7 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
+            disabled={tenant}
           />
           <Field
             label="Phone"
@@ -71,6 +82,7 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             required
+            disabled={tenant}
           />
           <Field
             label="Email"
@@ -79,6 +91,7 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={tenant}
           />
           <Field
             label="City"
@@ -86,20 +99,22 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" }) {
             value={city}
             onChange={(e) => setCity(e.target.value)}
             required
+            disabled={tenant}
           />
           <div className="sm:col-span-2">
             <Field
-              label={ops ? "Desk" : "Property"}
+              label={ops ? "Desk" : tenant ? "Unit" : "Property"}
               autoComplete="street-address"
-              value={property}
+              value={propertyValue}
               onChange={(e) => setProperty(e.target.value)}
               required={!ops}
+              disabled={tenant}
             />
           </div>
         </div>
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t border-line px-5 py-4 font-mono text-xs">
           <dt className="text-mute">Role</dt>
-          <dd>{ops ? "Super admin" : "Household"}</dd>
+          <dd>{ops ? "Super admin" : tenant ? "Tenant" : "Property owner"}</dd>
           {ops ? null : (
             <>
               <dt className="text-mute">Active house</dt>

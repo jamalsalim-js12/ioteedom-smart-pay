@@ -10,10 +10,10 @@ import { ModuleOff } from "@/components/shell/module-off";
 import { Topbar } from "@/components/shell/topbar";
 import { devices } from "@/data/demo";
 import { cn } from "@/lib/cn";
-import { useDemoStore } from "@/lib/store";
+import { useDemoStore, useEnabled } from "@/lib/store";
 
 export default function SmartHomePage() {
-  const on = useDemoStore((s) => s.enabled.smartHome);
+  const on = useEnabled().smartHome;
   const devicesOn = useDemoStore((s) => s.devicesOn);
   const toggleDevice = useDemoStore((s) => s.toggleDevice);
   const acTemp = useDemoStore((s) => s.acTemp);

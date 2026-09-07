@@ -33,7 +33,7 @@ export default function OpsDevicesPage() {
       href: "/admin/accounts/airport",
       tone: "ok" as const,
       title: "Airport Residential — 4 units reporting",
-      body: "Estate meters last seen this morning. Combined water due still open.",
+      body: "Unit meters last seen this morning. Water is collected from tenants, then remitted to Ghana Water.",
       meta: `${airport.address} · ${airport.units.length} units`,
     },
     ...platformIncidents

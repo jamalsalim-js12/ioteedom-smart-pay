@@ -30,8 +30,8 @@ export function ReceiptDocket({ payment }: { payment: Payment }) {
         </p>
         <p className="mt-1 text-sm text-mute">{payment.label}</p>
         <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 font-mono text-xs">
-          <dt className="text-mute">Provider</dt>
-          <dd>{payment.label.split("·")[0]?.trim()}</dd>
+          <dt className="text-mute">Paid to</dt>
+          <dd>{payment.payee}</dd>
           <dt className="text-mute">Method</dt>
           <dd>{method}</dd>
           <dt className="text-mute">Ref</dt>

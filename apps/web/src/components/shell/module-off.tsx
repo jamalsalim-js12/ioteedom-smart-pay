@@ -18,10 +18,10 @@ export function ModuleOff({
       <EmptyState
         icon={Power}
         title={`${name} is not on this account`}
-        body="Turn it on in Services if you want it here. The rest of the dashboard stays as-is."
+        body="IoTeedom hasn’t switched this module on. Ask ops if you need it. The rest of the dashboard stays as-is."
       >
         <Link href={href} className="inline-flex">
-          <Button intent="ink">Choose services</Button>
+          <Button intent="ink">See what’s on</Button>
         </Link>
       </EmptyState>
     </Panel>

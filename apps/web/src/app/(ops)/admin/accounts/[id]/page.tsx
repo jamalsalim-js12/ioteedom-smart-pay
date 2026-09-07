@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Receipt, Search } from "lucide-react";
+import { ModuleToggles } from "@/components/ops/module-toggles";
 import { Facts } from "@/components/ops/facts";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { paymentStatusClass } from "@/components/ui/receipt-dialog";
+import { blankModules } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { propertyLabel, routeParam, useOpsSnapshot } from "@/lib/ops";
-import { useDemoStore } from "@/lib/store";
+import { AMA_OWNER_ID, ownerAccountId, useDemoStore } from "@/lib/store";
 
 export default function OpsAccountDetailPage() {
   const id = routeParam(useParams<{ id: string }>().id);
@@ -21,10 +23,20 @@ export default function OpsAccountDetailPage() {
   const houses = useDemoStore((s) => s.houses);
   const updateOpsAccount = useDemoStore((s) => s.updateOpsAccount);
   const toggleOpsAccountStatus = useDemoStore((s) => s.toggleOpsAccountStatus);
+  const setAccountModules = useDemoStore((s) => s.setAccountModules);
+  const accountModules = useDemoStore((s) => s.accountModules);
+  const ownerInvites = useDemoStore((s) => s.ownerInvites);
+  const enabled = useDemoStore((s) => s.enabled);
   const account = accounts.find((item) => item.id === id);
   const related = payments.filter((item) => item.propertyId === id);
   const house = id === "east-legon" ? east : id === "airport" ? airport : null;
   const bills = house ? Object.values(house.bills) : [];
+  const ownerId = ownerAccountId(id);
+  const invite = ownerInvites.find((item) => item.id === id);
+  const modules =
+    accountModules[ownerId] ??
+    invite?.modules ??
+    (ownerId === AMA_OWNER_ID ? enabled : blankModules());
   const [form, setForm] = useState(() => ({
     name: account?.name ?? "",
     phone: account?.phone ?? "",
@@ -126,6 +138,27 @@ export default function OpsAccountDetailPage() {
 
         <Panel>
           <PanelHeader
+            eyebrow="Provisioning"
+            title="Modules this owner can see"
+            action={
+              invite?.pin ? (
+                <p className="font-mono text-xs text-mute">PIN {invite.pin}</p>
+              ) : null
+            }
+          />
+          <div className="px-5 py-4">
+            <p className="mb-4 text-sm text-mute">
+              Superadmin chooses the catalog. The owner cannot turn these on themselves.
+            </p>
+            <ModuleToggles
+              value={modules}
+              onChange={(next) => setAccountModules(id, next)}
+            />
+          </div>
+        </Panel>
+
+        <Panel>
+          <PanelHeader
             eyebrow={account.kind === "estate" ? "Estate" : "Household"}
             title={account.property}
             action={
@@ -178,10 +211,13 @@ export default function OpsAccountDetailPage() {
                   key={unit.id}
                   className="flex flex-wrap items-start justify-between gap-3 px-5 py-4"
                 >
-                  <p className="font-medium">{unit.name}</p>
+                    <div>
+                    <p className="font-medium">{unit.name}</p>
+                    <p className="mt-1 text-sm text-mute">{unit.tenant}</p>
+                  </div>
                   <p className="font-mono text-xs text-mute">
-                    ECG {compactCedis(unit.ecgDue)} · water{" "}
-                    {compactCedis(unit.waterDue)}
+                    ECG {compactCedis(unit.ecgDue)} (tenant) · water{" "}
+                    {compactCedis(unit.waterDue)} (collect)
                   </p>
                 </li>
               ))}

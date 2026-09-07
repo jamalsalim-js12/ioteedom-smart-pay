@@ -168,8 +168,8 @@ export function UnitsChart({
         <XAxis dataKey="name" tick={{ fill: "var(--color-mute)", fontSize: 12 }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fill: "var(--color-mute)", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip content={<Tip />} />
-        <Bar dataKey="ECG" stackId="dues" fill="var(--color-live)" radius={[0, 0, 0, 0]} />
-        <Bar dataKey="Water" stackId="dues" fill="var(--color-water)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="ECG" name="ECG (tenant)" stackId="dues" fill="var(--color-live)" radius={[0, 0, 0, 0]} />
+        <Bar dataKey="Water" name="Water (collect)" stackId="dues" fill="var(--color-water)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { type ServiceId } from "@/data/demo";
 import { cn } from "@/lib/cn";
-import { useDemoStore } from "@/lib/store";
+import { useDemoStore, useEnabled } from "@/lib/store";
 import { AccountMenu } from "@/components/shell/account-menu";
 import { HouseSwitcher } from "@/components/shell/house-switcher";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -32,7 +32,8 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const enabled = useDemoStore((s) => s.enabled);
+  const enabled = useEnabled();
+  const role = useDemoStore((s) => s.session?.role);
 
   return (
     <aside className="flex h-full w-[248px] shrink-0 flex-col bg-stub text-white">
@@ -48,6 +49,7 @@ export function Sidebar() {
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
         {nav.map((item) => {
           const hidden =
+            (item.href === "/services" && role === "tenant") ||
             (item.service && !enabled[item.service]) ||
             (item.anyOf && !item.anyOf.some((id) => enabled[id]));
           if (hidden) return null;

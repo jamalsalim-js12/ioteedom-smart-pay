@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 const stubTone: Record<string, string> = {
   ECG: "bg-live",
   GWCL: "bg-water",
+  Landlord: "bg-water",
   Zoomlion: "bg-grid",
   "Telecel Home": "bg-brass",
 };
@@ -18,6 +19,8 @@ export function Docket({
   credit,
   dueDate,
   cycle,
+  destination,
+  rail,
   onPay,
 }: {
   provider: string;
@@ -28,9 +31,18 @@ export function Docket({
   credit?: number;
   dueDate: string;
   cycle: string;
+  destination?: string;
+  rail?: string;
   onPay?: () => void;
 }) {
   const paid = due <= 0;
+  const dest = destination ?? provider;
+  const destLine =
+    rail === "collect"
+      ? `Pays ${dest}`
+      : rail === "remit"
+        ? "Remit to Ghana Water"
+        : `Goes to ${dest}`;
 
   return (
     <article className="grid overflow-hidden rounded-2xl border border-line bg-card md:grid-cols-[44px_1fr]">
@@ -59,7 +71,7 @@ export function Docket({
               {meter ? ` · ${meter}` : ""}
             </p>
             <p className="mt-1 text-sm text-mute">
-              {paid ? "Nothing on this cycle." : `Due ${dueDate}`}
+              {paid ? "Nothing on this cycle." : `Due ${dueDate} · ${destLine}`}
               {credit != null ? ` · prepaid ${compactCedis(credit)}` : ""}
             </p>
           </div>

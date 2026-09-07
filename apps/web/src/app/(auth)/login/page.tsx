@@ -8,7 +8,7 @@ import { BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { DEMO_PHONE, DEMO_PIN, OPS_PHONE, OPS_PIN, useDemoStore } from "@/lib/store";
+import { DEMO_PHONE, DEMO_PIN, OPS_PHONE, OPS_PIN, TENANT_PHONE, TENANT_PIN, useDemoStore } from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function LoginPage() {
     }
     const onboarded = useDemoStore.getState().onboarded;
     const role = useDemoStore.getState().session?.role;
-    router.replace(role === "ops" ? "/admin" : onboarded ? "/" : "/onboarding");
+    router.replace(role === "ops" ? "/admin" : role === "tenant" || onboarded ? "/" : "/onboarding");
   }
 
   return (
@@ -35,7 +35,7 @@ export default function LoginPage() {
       <BrandPane
         kicker="Smart Pay"
         title="One account for the house bills."
-        body="ECG, water, meters, solar, and EV charging — pick what you need, pay from here."
+        body="Superadmin invites the owner and picks the modules. Tenants pay ECG to ECG. Water goes to the owner, then Ghana Water."
       />
       <div className="flex min-h-dvh items-center justify-center px-6 py-12">
         <form onSubmit={submit} className="enter w-full max-w-sm">
@@ -90,7 +90,24 @@ export default function LoginPage() {
               router.replace(onboarded ? "/" : "/onboarding");
             }}
           >
-            Sign in as household
+            Sign in as property owner
+          </Button>
+          <Button
+            type="button"
+            intent="ghost"
+            className="mt-2 w-full"
+            onClick={() => {
+              setPhone("024 555 6677");
+              setPin(TENANT_PIN);
+              const result = signIn(TENANT_PHONE, TENANT_PIN);
+              if (result) {
+                setError(result);
+                return;
+              }
+              router.replace("/");
+            }}
+          >
+            Sign in as tenant
           </Button>
           <Button
             type="button"
@@ -110,9 +127,9 @@ export default function LoginPage() {
             Sign in as operator
           </Button>
           <p className="mt-6 text-sm text-mute">
-            New here?{" "}
+            New here? You need an invite from IoTeedom.{" "}
             <Link href="/signup" className="text-ink underline">
-              Create an account
+              How invites work
             </Link>
           </p>
           <button

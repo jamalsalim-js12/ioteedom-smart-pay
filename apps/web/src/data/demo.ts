@@ -13,11 +13,15 @@ export type PaymentStatus = "success" | "pending" | "failed" | "refunded";
 
 export type PropertyId = "east-legon" | "airport";
 
+export type PaymentRail = "direct" | "collect" | "remit";
+
 export type EstateUnit = {
   id: string;
   name: string;
+  tenant: string;
   ecgDue: number;
   waterDue: number;
+  waterM3: number;
 };
 
 export type BillId = "ecg" | "water" | "waste" | "internet";
@@ -39,13 +43,13 @@ export const serviceCatalog: {
   {
     id: "ecg",
     name: "ECG",
-    blurb: "Pay power bills and watch prepaid credit.",
+    blurb: "Tenants pay ECG themselves. Credit and history stay on the unit.",
     href: "/bills",
   },
   {
     id: "water",
     name: "Water",
-    blurb: "Ghana Water bills on the same account.",
+    blurb: "Tenants pay the owner from the meter. The owner pays Ghana Water.",
     href: "/bills",
   },
   {
@@ -57,7 +61,7 @@ export const serviceCatalog: {
   {
     id: "meters",
     name: "Water meters",
-    blurb: "Readings, usage, leak alerts.",
+    blurb: "Readings become the tenant water bill. Leak alerts sit here too.",
     href: "/meters",
   },
   {
@@ -90,6 +94,22 @@ export const defaultEnabled: Record<ServiceId, boolean> = {
   ev: true,
 };
 
+export function blankModules(): Record<ServiceId, boolean> {
+  return {
+    ecg: false,
+    water: false,
+    utilities: false,
+    meters: false,
+    smartHome: false,
+    solar: false,
+    ev: false,
+  };
+}
+
+export function namedModules(enabled: Record<ServiceId, boolean>) {
+  return serviceCatalog.filter((item) => enabled[item.id]).map((item) => item.name);
+}
+
 export const paymentMethods: {
   id: PaymentMethod;
   name: string;
@@ -113,6 +133,8 @@ export const initialBills: Record<
     dueDate: string;
     cycle: string;
     service: ServiceId;
+    destination: string;
+    rail: PaymentRail;
   }
 > = {
   ecg: {
@@ -126,6 +148,8 @@ export const initialBills: Record<
     dueDate: "22 Aug 2026",
     cycle: "Jul 2026",
     service: "ecg",
+    destination: "ECG",
+    rail: "direct",
   },
   water: {
     id: "water",
@@ -137,6 +161,8 @@ export const initialBills: Record<
     dueDate: "20 Aug 2026",
     cycle: "Jul 2026",
     service: "water",
+    destination: "Ghana Water",
+    rail: "direct",
   },
   waste: {
     id: "waste",
@@ -147,6 +173,8 @@ export const initialBills: Record<
     dueDate: "28 Aug 2026",
     cycle: "Aug 2026",
     service: "utilities",
+    destination: "Zoomlion",
+    rail: "direct",
   },
   internet: {
     id: "internet",
@@ -157,6 +185,8 @@ export const initialBills: Record<
     dueDate: "15 Aug 2026",
     cycle: "Aug 2026",
     service: "utilities",
+    destination: "Telecel Home",
+    rail: "direct",
   },
 };
 
@@ -169,6 +199,9 @@ export const seedPayments: {
   status: PaymentStatus;
   at: string;
   ref: string;
+  payee: string;
+  rail: PaymentRail;
+  unitId?: string;
 }[] = [
   {
     id: "pmt_01",
@@ -179,16 +212,20 @@ export const seedPayments: {
     status: "success",
     at: "12 Jul 2026, 19:14",
     ref: "SP-184201",
+    payee: "ECG",
+    rail: "direct",
   },
   {
     id: "pmt_02",
     billId: "water",
-    label: "GWCL · Jun cycle",
+    label: "Ghana Water · Jun cycle",
     amount: 118.0,
     method: "telecel",
     status: "success",
     at: "11 Jul 2026, 08:02",
     ref: "SP-183944",
+    payee: "Ghana Water",
+    rail: "direct",
   },
   {
     id: "pmt_03",
@@ -199,6 +236,8 @@ export const seedPayments: {
     status: "success",
     at: "14 Aug 2026, 07:41",
     ref: "SP-190112",
+    payee: "Telecel Home",
+    rail: "direct",
   },
   {
     id: "pmt_04",
@@ -209,6 +248,8 @@ export const seedPayments: {
     status: "failed",
     at: "3 Aug 2026, 21:06",
     ref: "SP-189440",
+    payee: "ECG",
+    rail: "direct",
   },
 ];
 
@@ -339,8 +380,8 @@ export const airportBills: typeof initialBills = {
     ...initialBills.ecg,
     account: "EST-ECG-8801",
     meter: "GE-EST-4401",
-    due: 1840,
-    credit: 120,
+    due: 0,
+    credit: 0,
     dueDate: "28 Aug 2026",
     cycle: "Jul 2026",
   },
@@ -350,6 +391,8 @@ export const airportBills: typeof initialBills = {
     meter: "WM-EST-4401",
     due: 490,
     dueDate: "18 Aug 2026",
+    destination: "Ghana Water",
+    rail: "remit",
   },
   waste: {
     ...initialBills.waste,
@@ -364,42 +407,50 @@ export const airportBills: typeof initialBills = {
 };
 
 export const airportUnits: EstateUnit[] = [
-  { id: "u1", name: "Unit 1", ecgDue: 420, waterDue: 110 },
-  { id: "u2", name: "Unit 2", ecgDue: 510, waterDue: 128 },
-  { id: "u3", name: "Unit 3", ecgDue: 390, waterDue: 98 },
-  { id: "u4", name: "Unit 4", ecgDue: 520, waterDue: 154 },
+  { id: "u1", name: "Unit 1", tenant: "Efua Sarpong", ecgDue: 420, waterDue: 0, waterM3: 16.2 },
+  { id: "u2", name: "Unit 2", tenant: "Kojo Boateng", ecgDue: 510, waterDue: 128, waterM3: 18.8 },
+  { id: "u3", name: "Unit 3", tenant: "Ama Darko", ecgDue: 0, waterDue: 98, waterM3: 14.4 },
+  { id: "u4", name: "Unit 4", tenant: "Yaw Mensah", ecgDue: 520, waterDue: 154, waterM3: 22.1 },
 ];
 
 export const airportPayments: typeof seedPayments = [
   {
     id: "pmt_ar_01",
-    billId: "ecg",
-    label: "ECG · estate Jun",
-    amount: 1620,
+    billId: "water",
+    label: "Unit 1 · water to Ama Mensah",
+    amount: 110,
     method: "mtn",
     status: "success",
-    at: "10 Jul 2026, 11:02",
+    at: "12 Aug 2026, 09:18",
     ref: "SP-201104",
+    payee: "Ama Mensah",
+    rail: "collect",
+    unitId: "u1",
   },
   {
     id: "pmt_ar_02",
     billId: "water",
-    label: "GWCL · estate Jun",
+    label: "Ghana Water · Jun remittance",
     amount: 440,
     method: "telecel",
     status: "success",
     at: "10 Jul 2026, 11:08",
     ref: "SP-201188",
+    payee: "Ghana Water",
+    rail: "remit",
   },
   {
     id: "pmt_ar_03",
     billId: "ecg",
-    label: "ECG prepaid top-up · Unit 2",
+    label: "Unit 2 · ECG",
     amount: 80,
     method: "mtn",
     status: "failed",
     at: "16 Aug 2026, 06:41",
     ref: "SP-208440",
+    payee: "ECG",
+    rail: "direct",
+    unitId: "u2",
   },
 ];
 
@@ -487,22 +538,22 @@ export const airportAlerts: HouseAlert[] = [
   {
     id: "ar1",
     tone: "warn",
-    service: "ecg",
-    title: "Unit 4 is heaviest this cycle",
-    body: "ECG GH₵520 · water GH₵154. Combined estate docket is still open.",
+    service: "water",
+    title: "Ghana Water still open",
+    body: "GH₵110 collected from Unit 1. GH₵380 still with tenants. GWCL GH₵490 is waiting on you.",
   },
   {
     id: "ar2",
     tone: "info",
-    service: "water",
-    title: "Estate water is overdue",
-    body: "GWCL GH₵490 on EST-W-8801 was due 18 Aug.",
+    service: "ecg",
+    title: "Tenants pay ECG themselves",
+    body: "Unit 2 and Unit 4 still have open ECG. That money goes to ECG, not through this account.",
   },
   {
     id: "ar3",
     tone: "ok",
     service: "utilities",
     title: "Fibre is settled",
-    body: "Telecel Home is clear. Four units still carry ECG and water.",
+    body: "Telecel Home is clear. Collect water, then remit to Ghana Water.",
   },
 ];

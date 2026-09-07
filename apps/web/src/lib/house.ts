@@ -1,6 +1,6 @@
-import type { ServiceId } from "@/data/demo";
+import type { EstateUnit, ServiceId } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
-import type { BillState, HouseState } from "@/lib/store";
+import type { BillState, HouseState, Session } from "@/lib/store";
 
 const months: Record<string, number> = {
   Jan: 0,
@@ -29,20 +29,69 @@ export function isOverdue(dueDate: string) {
   return due < today;
 }
 
+export function waterToCollect(house: HouseState) {
+  return (house.units ?? []).reduce((sum, unit) => sum + unit.waterDue, 0);
+}
+
+export function railHint(bill: BillState) {
+  if (bill.rail === "collect") return `Pays ${bill.destination}`;
+  if (bill.rail === "remit") return "Remit to Ghana Water";
+  return `Goes to ${bill.destination}`;
+}
+
+export function tenantBills(house: HouseState, unit: EstateUnit): BillState[] {
+  return [
+    {
+      ...house.bills.ecg,
+      account: `${house.bills.ecg.account} · ${unit.name}`,
+      due: unit.ecgDue,
+      credit: undefined,
+      destination: "ECG",
+      rail: "direct",
+    },
+    {
+      ...house.bills.water,
+      label: "Water",
+      provider: "Landlord",
+      account: `${unit.name} · ${house.label}`,
+      due: unit.waterDue,
+      destination: house.ownerName,
+      rail: "collect",
+    },
+  ];
+}
+
+export function visibleBills(
+  house: HouseState,
+  enabled: Record<ServiceId, boolean>,
+  session?: Session | null,
+) {
+  if (session?.role === "tenant") {
+    const unit = (house.units ?? []).find((item) => item.id === session.unitId);
+    if (!unit) return [];
+    return tenantBills(house, unit).filter((bill) => enabled[bill.service]);
+  }
+  return (Object.values(house.bills ?? {}) as BillState[]).filter((bill) => {
+    if (!enabled[bill.service]) return false;
+    if (house.kind === "estate" && bill.id === "ecg") return false;
+    return true;
+  });
+}
+
 export function openBills(
   house: HouseState,
   enabled: Record<ServiceId, boolean>,
+  session?: Session | null,
 ) {
-  return (Object.values(house.bills ?? {}) as BillState[]).filter(
-    (bill) => enabled[bill.service] && bill.due > 0,
-  );
+  return visibleBills(house, enabled, session).filter((bill) => bill.due > 0);
 }
 
 export function nextDueBill(
   house: HouseState,
   enabled: Record<ServiceId, boolean>,
+  session?: Session | null,
 ) {
-  return openBills(house, enabled)
+  return openBills(house, enabled, session)
     .slice()
     .sort((a, b) => parseBillDate(a.dueDate).getTime() - parseBillDate(b.dueDate).getTime())[0];
 }
@@ -56,12 +105,15 @@ export function houseAlerts(
   );
 }
 
-export function latestPayment(house: HouseState) {
-  return (house.payments ?? []).slice().sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+export function latestPayment(house: HouseState, unitId?: string) {
+  const list = unitId
+    ? (house.payments ?? []).filter((item) => item.unitId === unitId)
+    : (house.payments ?? []);
+  return list.slice().sort((a, b) => (a.at < b.at ? 1 : -1))[0];
 }
 
 export function statusHint(house: HouseState, enabled: Record<ServiceId, boolean>) {
-  if (enabled.meters && !house.leakResolved) {
+  if (enabled.meters && !house.leakResolved && house.kind !== "estate") {
     return {
       label: "Leak watch",
       value: "Armed",
@@ -70,12 +122,15 @@ export function statusHint(house: HouseState, enabled: Record<ServiceId, boolean
     };
   }
   if (house.kind === "estate") {
-    const openUnits = (house.units ?? []).filter((unit) => unit.ecgDue + unit.waterDue > 0).length;
+    const owing = (house.units ?? []).filter((unit) => unit.waterDue > 0).length;
     return {
-      label: "Units",
-      value: String((house.units ?? []).length),
-      hint: `${openUnits} still carrying dues`,
-      tone: openUnits > 0 ? ("live" as const) : ("ok" as const),
+      label: "To collect",
+      value: compactCedis(waterToCollect(house)),
+      hint:
+        owing === 0
+          ? "Tenants have paid water"
+          : `${owing} unit${owing === 1 ? "" : "s"} still owing water`,
+      tone: owing > 0 ? ("live" as const) : ("ok" as const),
     };
   }
   const open = houseAlerts(house, enabled).length;
@@ -100,7 +155,7 @@ export function dueHint(bill: BillState | undefined) {
   return {
     label: overdue ? "Overdue" : "Next due",
     value: compactCedis(bill.due),
-    hint: `${bill.label} · ${bill.dueDate}`,
+    hint: `${railHint(bill)} · ${bill.dueDate}`,
     tone: overdue ? ("alert" as const) : ("live" as const),
   };
 }

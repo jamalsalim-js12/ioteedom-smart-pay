@@ -14,7 +14,11 @@ import { useActiveHouse, useDemoStore } from "@/lib/store";
 
 export default function ActivityPage() {
   const house = useActiveHouse();
-  const payments = house.payments;
+  const session = useDemoStore((s) => s.session);
+  const payments =
+    session?.role === "tenant"
+      ? house.payments.filter((item) => item.unitId === session.unitId)
+      : house.payments;
   const sessions = useDemoStore((s) => s.sessions);
   const houseEvents = useDemoStore((s) => s.houseEvents);
 
@@ -38,7 +42,7 @@ export default function ActivityPage() {
                     <div>
                       <p className="font-medium">{item.label}</p>
                       <p className="mt-1 font-mono text-xs text-mute">
-                        {item.ref} ·{" "}
+                        {item.payee} · {item.ref} ·{" "}
                         {paymentMethods.find((m) => m.id === item.method)?.name}
                       </p>
                       <p className="mt-1 text-xs text-mute">{item.at}</p>
@@ -60,6 +64,7 @@ export default function ActivityPage() {
         </Panel>
 
         <div className="flex flex-col gap-5">
+          {session?.role === "tenant" ? null : (
           <Panel>
             <PanelHeader eyebrow="Charging" title="EV sessions" />
             {sessions.length === 0 ? (
@@ -87,6 +92,8 @@ export default function ActivityPage() {
               </ul>
             )}
           </Panel>
+          )}
+          {session?.role === "tenant" ? null : (
           <Panel>
             <PanelHeader eyebrow="House" title="Smart home events" />
             {houseEvents.length === 0 ? (
@@ -106,6 +113,7 @@ export default function ActivityPage() {
               </ul>
             )}
           </Panel>
+          )}
         </div>
       </div>
     </div>

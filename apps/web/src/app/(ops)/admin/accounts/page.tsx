@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { InviteOwnerDialog } from "@/components/ops/invite-owner-dialog";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -19,6 +20,7 @@ export default function OpsAccountsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [openFilter, setOpenFilter] = useState<"all" | "has_open" | "zero_open">("all");
   const [cityFilter, setCityFilter] = useState("all");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const cities = useMemo(
     () => [...new Set(accounts.map((item) => item.city).filter(Boolean))].sort(),
@@ -61,9 +63,12 @@ export default function OpsAccountsPage() {
     <div className="enter">
       <OpsTopbar kicker={`${accounts.length} on the platform`} title="Accounts" />
       <div className="p-6">
+        <div className="mb-5">
+          <Button onClick={() => setInviteOpen(true)}>Invite property owner</Button>
+        </div>
         <Panel>
           <PanelHeader
-            eyebrow="Households and estates"
+            eyebrow="Owners we invited"
             title="Everyone on the rails"
             action={
               <p className="font-mono text-xs text-mute">{open} with dues</p>
@@ -109,13 +114,15 @@ export default function OpsAccountsPage() {
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="mt-1 font-mono text-xs text-mute">
-                      {item.kind === "estate"
-                        ? `Estate${item.units ? ` · ${item.units} units` : ""}`
-                        : "Household"}{" "}
+                      {item.inviteStatus === "invited"
+                        ? "Invited"
+                        : item.kind === "estate"
+                          ? `Estate${item.units ? ` · ${item.units} units` : ""}`
+                          : "Owner"}{" "}
                       · {item.property} · {item.phone}
                     </p>
                     <p className="mt-1 font-mono text-[11px] text-mute">
-                      Last seen {item.lastSeen} · {item.city}
+                      {item.modules.join(" · ") || "No modules yet"} · {item.city}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -169,6 +176,7 @@ export default function OpsAccountsPage() {
           </ul>
         </Panel>
       </div>
+      <InviteOwnerDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   );
 }

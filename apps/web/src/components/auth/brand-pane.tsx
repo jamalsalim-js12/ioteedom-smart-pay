@@ -32,7 +32,7 @@ export function BrandPane({
         <p className="mt-4 max-w-sm text-sm leading-6 text-white/65">{body}</p>
       </div>
       <p className="font-mono text-[11px] text-white/40">
-        ECG · GWCL · meters · solar · EV
+        ECG · water via owner · meters · solar · EV
       </p>
       <span className="pointer-events-none absolute -right-8 -bottom-10 font-display text-[180px] leading-none text-white/5">
         SP

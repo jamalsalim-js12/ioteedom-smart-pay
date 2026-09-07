@@ -14,10 +14,10 @@ import { Topbar } from "@/components/shell/topbar";
 import { chargerSites, evVehicle, paymentMethods } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { useActiveHouse, useDemoStore } from "@/lib/store";
+import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
 
 export default function EvPage() {
-  const on = useDemoStore((s) => s.enabled.ev);
+  const on = useEnabled().ev;
   const house = useActiveHouse();
   const wallet = house.wallet;
   const batteryPct = useDemoStore((s) => s.batteryPct);

@@ -16,25 +16,26 @@ import { ModuleOff } from "@/components/shell/module-off";
 import { Topbar } from "@/components/shell/topbar";
 import { paymentMethods, type BillId } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
-import { useActiveHouse, useDemoStore } from "@/lib/store";
+import { visibleBills } from "@/lib/house";
+import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
 
 export default function BillsPage() {
   const house = useActiveHouse();
-  const bills = house.bills;
-  const payments = house.payments;
-  const enabled = useDemoStore((s) => s.enabled);
+  const session = useDemoStore((s) => s.session);
+  const enabled = useEnabled();
   const topUpEcg = useDemoStore((s) => s.topUpEcg);
   const [payId, setPayId] = useState<BillId | null>(null);
   const [payAll, setPayAll] = useState(false);
   const [topup, setTopup] = useState(false);
 
   const visible = useMemo(
-    () =>
-      (Object.values(bills) as (typeof bills)[BillId][]).filter(
-        (bill) => enabled[bill.service],
-      ),
-    [bills, enabled],
+    () => visibleBills(house, enabled, session),
+    [house, enabled, session],
   );
+  const tenant = session?.role === "tenant";
+  const payments = tenant && session.role === "tenant"
+    ? house.payments.filter((item) => item.unitId === session.unitId)
+    : house.payments;
   const totalDue = visible.reduce((sum, bill) => sum + bill.due, 0);
 
   if (!enabled.ecg && !enabled.water && !enabled.utilities) {
@@ -48,14 +49,23 @@ export default function BillsPage() {
 
   return (
     <div className="enter">
-      <Topbar kicker={`${house.label} · ECG · GWCL · the rest`} title="Bills" />
+      <Topbar
+        kicker={
+          tenant
+            ? `${house.label} · you pay ECG · water goes to ${house.ownerName}`
+            : house.kind === "estate"
+              ? `${house.label} · collect water · remit Ghana Water`
+              : `${house.label} · ECG · Ghana Water · the rest`
+        }
+        title="Bills"
+      />
       <div className="grid gap-5 p-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             <Button disabled={totalDue <= 0} onClick={() => setPayAll(true)}>
               Pay all due
             </Button>
-            {enabled.ecg ? (
+            {enabled.ecg && !tenant && house.kind !== "estate" ? (
               <Button intent="ghost" onClick={() => setTopup(true)}>
                 Top up prepaid
               </Button>
@@ -82,7 +92,7 @@ export default function BillsPage() {
                     <div>
                       <p className="font-medium">{item.label}</p>
                       <p className="mt-1 font-mono text-xs text-mute">
-                        {item.ref} ·{" "}
+                        {item.payee} · {item.ref} ·{" "}
                         {paymentMethods.find((m) => m.id === item.method)?.name} ·{" "}
                         {item.at}
                       </p>

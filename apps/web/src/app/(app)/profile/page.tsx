@@ -12,12 +12,16 @@ export default function ProfilePage() {
   const router = useRouter();
   const signOut = useDemoStore((s) => s.signOut);
   const activePropertyId = useDemoStore((s) => s.activePropertyId);
+  const role = useDemoStore((s) => s.session?.role);
 
   return (
     <div className="enter">
       <Topbar kicker="Account" title="Profile" />
       <div className="flex flex-col gap-5 p-6">
-        <ProfileForm key={activePropertyId} kind="household" />
+        <ProfileForm
+          key={activePropertyId}
+          kind={role === "tenant" ? "tenant" : "household"}
+        />
         <Panel>
           <PanelHeader eyebrow="Appearance" title="Theme" />
           <AppearancePanel />

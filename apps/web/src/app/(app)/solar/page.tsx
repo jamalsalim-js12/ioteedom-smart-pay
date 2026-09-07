@@ -7,10 +7,10 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { ModuleOff } from "@/components/shell/module-off";
 import { Topbar } from "@/components/shell/topbar";
 import { solarSite } from "@/data/demo";
-import { useDemoStore } from "@/lib/store";
+import { useDemoStore, useEnabled } from "@/lib/store";
 
 export default function SolarPage() {
-  const on = useDemoStore((s) => s.enabled.solar);
+  const on = useEnabled().solar;
   const solarExport = useDemoStore((s) => s.solarExport);
   const toggleSolarExport = useDemoStore((s) => s.toggleSolarExport);
 

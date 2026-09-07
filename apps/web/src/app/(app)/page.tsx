@@ -27,8 +27,9 @@ import {
   nextDueBill,
   openBills,
   statusHint,
+  waterToCollect,
 } from "@/lib/house";
-import { useActiveHouse, useDemoStore } from "@/lib/store";
+import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
 
 const billColor: Record<BillId, string> = {
   ecg: "var(--color-live)",
@@ -47,7 +48,8 @@ export default function OverviewPage() {
   const router = useRouter();
   const house = useActiveHouse();
   const bills = house.bills;
-  const enabled = useDemoStore((s) => s.enabled);
+  const enabled = useEnabled();
+  const session = useDemoStore((s) => s.session);
   const devicesOn = useDemoStore((s) => s.devicesOn);
   const toggleDevice = useDemoStore((s) => s.toggleDevice);
   const dismissAlert = useDemoStore((s) => s.dismissAlert);
@@ -58,15 +60,20 @@ export default function OverviewPage() {
   const [payId, setPayId] = useState<BillId | null>(null);
   const [payAll, setPayAll] = useState(false);
   const [topup, setTopup] = useState(false);
-  const [unitId, setUnitId] = useState<string | null>(null);
 
-  const due = openBills(house, enabled);
+  const tenant = session?.role === "tenant";
+  const due = openBills(house, enabled, session);
   const totalDue = due.reduce((sum, bill) => sum + bill.due, 0);
-  const next = dueHint(nextDueBill(house, enabled));
-  const visibleAlerts = houseAlerts(house, enabled);
+  const next = dueHint(nextDueBill(house, enabled, session));
+  const visibleAlerts = tenant ? [] : houseAlerts(house, enabled);
   const houseStatus = statusHint(house, enabled);
-  const lastPay = latestPayment(house);
+  const lastPay = latestPayment(
+    house,
+    tenant && session.role === "tenant" ? session.unitId : undefined,
+  );
   const credit = bills.ecg.credit ?? 0;
+  const collected = house.waterCollected;
+  const toCollect = waterToCollect(house);
   const spendMix = due.map((bill) => ({
     name: bill.label,
     value: bill.due,
@@ -83,9 +90,11 @@ export default function OverviewPage() {
             label="Open amount"
             value={compactCedis(totalDue)}
             hint={
-              house.kind === "estate"
-                ? `${(house.units ?? []).length} units on one docket`
-                : `${due.length} bill${due.length === 1 ? "" : "s"} still open`
+              tenant
+                ? `${due.length} bill${due.length === 1 ? "" : "s"} on your unit`
+                : house.kind === "estate"
+                  ? `${compactCedis(toCollect)} still to collect from tenants`
+                  : `${due.length} bill${due.length === 1 ? "" : "s"} still open`
             }
             tone={totalDue > 0 ? "live" : "ok"}
           />
@@ -95,11 +104,18 @@ export default function OverviewPage() {
             hint={next.hint}
             tone={next.tone}
           />
-          {enabled.ecg ? (
+          {enabled.ecg && !tenant && house.kind !== "estate" ? (
             <Kpi
               label="ECG credit"
               value={compactCedis(credit)}
               hint={bills.ecg.meter ?? bills.ecg.account}
+            />
+          ) : house.kind === "estate" && !tenant ? (
+            <Kpi
+              label="Collected water"
+              value={compactCedis(collected)}
+              hint="Waiting to remit to Ghana Water"
+              tone={collected > 0 ? "ok" : "live"}
             />
           ) : (
             <Kpi
@@ -120,14 +136,14 @@ export default function OverviewPage() {
           <Button disabled={totalDue <= 0} onClick={() => setPayAll(true)}>
             Pay all due
           </Button>
-          {enabled.ecg ? (
+          {enabled.ecg && !tenant && house.kind !== "estate" ? (
             <Button intent="ghost" onClick={() => setTopup(true)}>
               Top up ECG
             </Button>
           ) : null}
-          {enabled.water && bills.water.due > 0 ? (
+          {enabled.water && (tenant ? due.some((bill) => bill.id === "water") : bills.water.due > 0) ? (
             <Button intent="water" onClick={() => setPayId("water")}>
-              Pay water
+              {tenant || house.kind !== "estate" ? "Pay water" : "Pay Ghana Water"}
             </Button>
           ) : null}
         </div>
@@ -136,16 +152,22 @@ export default function OverviewPage() {
           <Panel>
             <PanelHeader
               eyebrow={house.label}
-              title={house.kind === "estate" ? "Estate load" : "Power and water"}
+              title={
+                tenant
+                  ? "Your usage"
+                  : house.kind === "estate"
+                    ? "Estate load"
+                    : "Power and water"
+              }
             />
             <div className="h-64 px-2 pt-2 pb-4">
               <UsageChart data={house.usage} />
             </div>
           </Panel>
           <Panel>
-            {house.kind === "estate" ? (
+            {house.kind === "estate" && !tenant ? (
               <>
-                <PanelHeader eyebrow="This cycle" title="Dues by unit" />
+                <PanelHeader eyebrow="This cycle" title="Open by unit" />
                 <div className="h-64 px-2 pt-2 pb-4">
                   <UnitsChart units={house.units ?? []} />
                 </div>
@@ -182,35 +204,36 @@ export default function OverviewPage() {
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
           <div className="flex flex-col gap-3">
-            {house.kind === "estate" ? (
-              (house.units ?? []).map((unit) => {
-                const unitDue = Number((unit.ecgDue + unit.waterDue).toFixed(2));
-                return (
+            {house.kind === "estate" && !tenant ? (
+              <>
+                {enabled.water ? (
+                  <Docket
+                    {...house.bills.water}
+                    onPay={() => setPayId("water")}
+                  />
+                ) : null}
+                {(house.units ?? []).map((unit) => (
                   <article
                     key={unit.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-line bg-card px-5 py-4 sm:flex-row sm:items-end sm:justify-between"
+                    className="flex flex-col gap-3 rounded-2xl border border-line bg-card px-5 py-4"
                   >
                     <div>
                       <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-                        {house.label}
+                        {unit.tenant}
                       </p>
                       <p className="mt-1 font-display text-2xl tracking-tight">
                         {unit.name}
                       </p>
                       <p className="mt-2 font-mono text-xs text-mute">
-                        ECG {compactCedis(unit.ecgDue)} · water{" "}
-                        {compactCedis(unit.waterDue)}
+                        ECG {unit.ecgDue > 0 ? compactCedis(unit.ecgDue) : "paid"} · tenant pays ECG
+                      </p>
+                      <p className="mt-1 font-mono text-xs text-mute">
+                        Water {unit.waterDue > 0 ? `${compactCedis(unit.waterDue)} to collect` : "collected"} · {unit.waterM3} m³
                       </p>
                     </div>
-                    <Button
-                      disabled={unitDue <= 0}
-                      onClick={() => setUnitId(unit.id)}
-                    >
-                      {unitDue <= 0 ? "Settled" : "Pay unit"}
-                    </Button>
                   </article>
-                );
-              })
+                ))}
+              </>
             ) : due.length === 0 ? (
               <Panel>
                 <EmptyState
@@ -369,14 +392,6 @@ export default function OverviewPage() {
         settleAll
         open={payAll}
         onOpenChange={setPayAll}
-      />
-      <PayDialog
-        billId={null}
-        unitId={unitId}
-        open={unitId != null}
-        onOpenChange={(open) => {
-          if (!open) setUnitId(null);
-        }}
       />
       <AmountDialog
         open={topup}

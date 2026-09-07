@@ -17,9 +17,42 @@ export function HouseSwitcher({
   const houses = useDemoStore((s) => s.houses);
   const active = useDemoStore((s) => s.activePropertyId);
   const switchProperty = useDemoStore((s) => s.switchProperty);
+  const session = useDemoStore((s) => s.session);
   const dark = tone === "dark";
   const list = Object.values(houses);
   const current = houses[active];
+  const tenant = session?.role === "tenant";
+  const unit =
+    tenant && session.role === "tenant"
+      ? current?.units.find((item) => item.id === session.unitId)
+      : null;
+
+  if (tenant) {
+    return (
+      <div>
+        {compact ? null : (
+          <p
+            className={cn(
+              "mb-2 font-mono text-[10px] uppercase tracking-[0.16em]",
+              dark ? "text-white/40" : "text-mute",
+            )}
+          >
+            Unit
+          </p>
+        )}
+        <p
+          className={cn(
+            "truncate rounded-lg border px-3 py-2.5 text-sm",
+            dark
+              ? "border-white/15 bg-white/10 text-white"
+              : "border-line bg-field text-ink",
+          )}
+        >
+          {unit ? `${unit.name} · ${current?.label}` : current?.label}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>

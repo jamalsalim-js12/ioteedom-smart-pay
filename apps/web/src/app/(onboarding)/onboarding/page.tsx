@@ -8,36 +8,24 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
-import { serviceCatalog, type ServiceId } from "@/data/demo";
+import { serviceCatalog } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/lib/store";
 
-const steps = ["House", "Services", "Accounts"] as const;
+const steps = ["House", "Modules", "Accounts"] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const profile = useDemoStore((s) => s.profile);
+  const enabled = useDemoStore((s) => s.enabled);
   const completeOnboarding = useDemoStore((s) => s.completeOnboarding);
   const [step, setStep] = useState(0);
   const [property, setProperty] = useState(
     profile.property || "12 Boundary Rd, East Legon",
   );
   const [city, setCity] = useState(profile.city || "Accra");
-  const [enabled, setEnabled] = useState<Record<ServiceId, boolean>>({
-    ecg: true,
-    water: true,
-    utilities: false,
-    meters: true,
-    smartHome: false,
-    solar: false,
-    ev: false,
-  });
   const [ecgAccount, setEcgAccount] = useState("5418 2291 03");
   const [waterAccount, setWaterAccount] = useState("W-ACC-209441");
-
-  function toggle(id: ServiceId) {
-    setEnabled((current) => ({ ...current, [id]: !current[id] }));
-  }
 
   function next() {
     if (step < 2) {
@@ -47,7 +35,6 @@ export default function OnboardingPage() {
     completeOnboarding({
       property,
       city,
-      enabled,
       ecgAccount: enabled.ecg ? ecgAccount : undefined,
       waterAccount: enabled.water ? waterAccount : undefined,
     });
@@ -58,8 +45,8 @@ export default function OnboardingPage() {
     <>
       <BrandPane
         kicker={`Step ${step + 1} of 3`}
-        title="Tell us what this house needs."
-        body="You can change services later. ECG and water are the usual start in Accra."
+        title="Confirm the house IoTeedom invited you for."
+        body="Modules were chosen by superadmin. ECG is paid to ECG. Water from a tenant goes to the owner, then Ghana Water."
       />
       <div className="flex min-h-dvh items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
@@ -104,43 +91,40 @@ export default function OnboardingPage() {
             {step === 1 ? (
               <>
                 <h1 className="font-display text-3xl tracking-tight">
-                  Choose services
+                  What’s on this account
                 </h1>
                 <p className="mt-2 text-sm text-mute">
-                  ECG and water are on. Add the rest if the house has them.
+                  Superadmin picked these. You can’t add more from here.
                 </p>
                 <ul className="mt-6 flex flex-col gap-2">
                   {serviceCatalog.map((service) => (
-                    <li key={service.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(service.id)}
-                        className={cn(
-                          "flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-150 ease-[var(--ease-out)]",
-                          enabled[service.id]
-                            ? "border-ink bg-ink text-on-ink"
-                            : "border-line bg-card",
-                        )}
-                      >
-                        <span>
-                          <span className="block font-medium">
-                            {service.name}
-                          </span>
-                          <span
-                            className={cn(
-                              "mt-0.5 block text-sm",
-                              enabled[service.id]
-                                ? "text-on-ink/70"
-                                : "text-mute",
-                            )}
-                          >
-                            {service.blurb}
-                          </span>
+                    <li
+                      key={service.id}
+                      className={cn(
+                        "flex w-full items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left",
+                        enabled[service.id]
+                          ? "border-ink bg-ink text-on-ink"
+                          : "border-line bg-card",
+                      )}
+                    >
+                      <span>
+                        <span className="block font-medium">
+                          {service.name}
                         </span>
-                        <span className="font-mono text-[11px] uppercase">
-                          {enabled[service.id] ? "On" : "Off"}
+                        <span
+                          className={cn(
+                            "mt-0.5 block text-sm",
+                            enabled[service.id]
+                              ? "text-on-ink/70"
+                              : "text-mute",
+                          )}
+                        >
+                          {service.blurb}
                         </span>
-                      </button>
+                      </span>
+                      <span className="font-mono text-[11px] uppercase">
+                        {enabled[service.id] ? "On" : "Off"}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -165,7 +149,7 @@ export default function OnboardingPage() {
                   ) : null}
                   {enabled.water ? (
                     <Field
-                      label="GWCL account"
+                      label="GWCL account (property)"
                       value={waterAccount}
                       onChange={(e) => setWaterAccount(e.target.value)}
                     />
@@ -175,7 +159,7 @@ export default function OnboardingPage() {
                       className="py-8"
                       icon={Receipt}
                       title="No billers on"
-                      body="You can add them later in Services."
+                      body="IoTeedom hasn’t switched ECG or water on for this account yet."
                     />
                   ) : null}
                 </div>

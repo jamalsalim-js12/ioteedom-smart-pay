@@ -25,6 +25,7 @@ export function RouteGate({ children }: { children: ReactNode }) {
   const markHydrated = useDemoStore((s) => s.markHydrated);
   const role = session?.role ?? "household";
   const ops = role === "ops";
+  const tenant = role === "tenant";
 
   useEffect(() => {
     const done = () => markHydrated();
@@ -49,7 +50,13 @@ export function RouteGate({ children }: { children: ReactNode }) {
       }
       return;
     }
-    if (session && !ops && isOpsPath(pathname)) {
+    if (session && tenant) {
+      if (guestPaths.has(pathname) || pathname === "/onboarding" || isOpsPath(pathname)) {
+        router.replace("/");
+      }
+      return;
+    }
+    if (session && isOpsPath(pathname)) {
       router.replace("/");
       return;
     }
@@ -60,7 +67,7 @@ export function RouteGate({ children }: { children: ReactNode }) {
     if (session && !ops && onboarded && (guestPaths.has(pathname) || pathname === "/onboarding")) {
       router.replace("/");
     }
-  }, [hydrated, session, ops, onboarded, pathname, router]);
+  }, [hydrated, session, ops, tenant, onboarded, pathname, router]);
 
   const allowed =
     hydrated &&
@@ -68,12 +75,18 @@ export function RouteGate({ children }: { children: ReactNode }) {
       session &&
       (isOpsPath(pathname) || isPrintPath(pathname))) ||
       (session &&
+        tenant &&
+        !guestPaths.has(pathname) &&
+        pathname !== "/onboarding" &&
+        !isOpsPath(pathname)) ||
+      (session &&
         !ops &&
+        !tenant &&
         onboarded &&
         !guestPaths.has(pathname) &&
         pathname !== "/onboarding" &&
         !isOpsPath(pathname)) ||
-      (session && !ops && !onboarded && pathname === "/onboarding") ||
+      (session && !ops && !tenant && !onboarded && pathname === "/onboarding") ||
       (!session && guestPaths.has(pathname)));
 
   if (!allowed) {
