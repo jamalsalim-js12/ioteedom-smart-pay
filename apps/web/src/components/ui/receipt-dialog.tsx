@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
+import {
+  DialogActions,
+  DialogBackdrop,
+  DialogBody,
+  DialogHeader,
+  DialogPanel,
+} from "@/components/ui/dialog-frame";
 import { paymentMethods } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { type Payment, useDemoStore } from "@/lib/store";
@@ -59,18 +66,16 @@ export function ReceiptDialog() {
       }}
     >
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-scrim/45 transition-opacity duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-starting-style:opacity-0" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-5 outline-none transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
-          <Dialog.Title className="font-display text-xl tracking-tight">Paid</Dialog.Title>
-          <Dialog.Description className="mt-1 text-sm text-mute">
-            Keep this docket for your records.
-          </Dialog.Description>
-          {receipt ? (
-            <div className="mt-4">
-              <ReceiptDocket payment={receipt} />
-            </div>
-          ) : null}
-          <div className="mt-5 flex flex-wrap justify-end gap-2">
+        <DialogBackdrop />
+        <DialogPanel>
+          <DialogHeader>
+            <Dialog.Title className="font-display text-xl tracking-tight">Paid</Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-mute">
+              Keep this docket for your records.
+            </Dialog.Description>
+          </DialogHeader>
+          <DialogBody>{receipt ? <ReceiptDocket payment={receipt} /> : null}</DialogBody>
+          <DialogActions>
             <Button
               intent="ghost"
               type="button"
@@ -95,8 +100,8 @@ export function ReceiptDialog() {
             <Button type="button" onClick={() => showReceipt(null)}>
               Done
             </Button>
-          </div>
-        </Dialog.Popup>
+          </DialogActions>
+        </DialogPanel>
       </Dialog.Portal>
     </Dialog.Root>
   );
