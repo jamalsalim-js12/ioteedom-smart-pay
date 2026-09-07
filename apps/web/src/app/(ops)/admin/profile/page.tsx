@@ -6,11 +6,11 @@ import { OpsTopbar } from "@/components/shell/ops-shell";
 import { AppearancePanel } from "@/components/theme/appearance-panel";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { useDemoStore } from "@/lib/store";
+import { useAuthSession } from "@/lib/session";
 
 export default function OpsProfilePage() {
   const router = useRouter();
-  const signOut = useDemoStore((s) => s.signOut);
+  const { signOut } = useAuthSession();
 
   return (
     <div className="enter">
@@ -25,7 +25,7 @@ export default function OpsProfilePage() {
           <Button
             intent="ink"
             onClick={() => {
-              signOut();
+              void signOut();
               router.replace("/login");
             }}
           >

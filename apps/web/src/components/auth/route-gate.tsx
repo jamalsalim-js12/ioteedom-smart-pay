@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { BrandMark } from "@/components/brand/brand-mark";
-import { useDemoStore } from "@/lib/store";
+import { destinationFor, useAuthSession } from "@/lib/session";
 
 const guestPaths = new Set(["/login", "/signup"]);
 
@@ -19,76 +19,67 @@ function isPrintPath(pathname: string) {
 export function RouteGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const hydrated = useDemoStore((s) => s.hydrated);
-  const session = useDemoStore((s) => s.session);
-  const onboarded = useDemoStore((s) => s.onboarded);
-  const markHydrated = useDemoStore((s) => s.markHydrated);
-  const role = session?.role ?? "household";
-  const ops = role === "ops";
-  const tenant = role === "tenant";
+  const { isReady, session } = useAuthSession();
+  const ops = session?.role === "ops";
 
   useEffect(() => {
-    const done = () => markHydrated();
-    const unsub = useDemoStore.persist.onFinishHydration(done);
-    if (useDemoStore.persist.hasHydrated()) done();
-    const t = window.setTimeout(done, 80);
-    return () => {
-      unsub();
-      window.clearTimeout(t);
-    };
-  }, [markHydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (!session && !guestPaths.has(pathname)) {
-      router.replace("/login");
+    if (!isReady) return;
+    if (!session) {
+      if (!guestPaths.has(pathname)) router.replace("/login");
       return;
     }
-    if (session && ops) {
-      if (
-        guestPaths.has(pathname) ||
-        pathname === "/onboarding" ||
-        (!isOpsPath(pathname) && !isPrintPath(pathname))
-      ) {
+
+    const dest = destinationFor(session);
+    if (session.mustChangePin) {
+      if (pathname !== "/pin") router.replace("/pin");
+      return;
+    }
+    if (ops) {
+      if (guestPaths.has(pathname) || pathname === "/onboarding" || pathname === "/pin") {
+        router.replace("/admin");
+        return;
+      }
+      if (!isOpsPath(pathname) && !isPrintPath(pathname)) {
         router.replace("/admin");
       }
       return;
     }
-    if (session && tenant) {
-      if (guestPaths.has(pathname) || pathname === "/onboarding" || isOpsPath(pathname)) {
-        router.replace("/");
-      }
+    if (isOpsPath(pathname)) {
+      router.replace(dest);
       return;
     }
-    if (session && isOpsPath(pathname)) {
-      router.replace("/");
-      return;
-    }
-    if (session && !ops && !onboarded && pathname !== "/onboarding") {
+    if (!session.onboarded && pathname !== "/onboarding") {
       router.replace("/onboarding");
       return;
     }
-    if (session && !ops && onboarded && (guestPaths.has(pathname) || pathname === "/onboarding")) {
+    if (
+      session.onboarded &&
+      (guestPaths.has(pathname) || pathname === "/onboarding" || pathname === "/pin")
+    ) {
       router.replace("/");
     }
-  }, [hydrated, session, ops, tenant, onboarded, pathname, router]);
+  }, [isReady, session, ops, pathname, router]);
 
   const allowed =
-    hydrated &&
-    ((ops && session && (isOpsPath(pathname) || isPrintPath(pathname))) ||
-      (session &&
-        tenant &&
-        !guestPaths.has(pathname) &&
-        pathname !== "/onboarding" &&
-        !isOpsPath(pathname)) ||
+    isReady &&
+    ((session?.mustChangePin && pathname === "/pin") ||
+      (ops &&
+        session &&
+        !session.mustChangePin &&
+        (isOpsPath(pathname) || isPrintPath(pathname))) ||
       (session &&
         !ops &&
-        !tenant &&
-        onboarded &&
+        !session.mustChangePin &&
+        !session.onboarded &&
+        pathname === "/onboarding") ||
+      (session &&
+        !ops &&
+        !session.mustChangePin &&
+        session.onboarded &&
         !guestPaths.has(pathname) &&
         pathname !== "/onboarding" &&
+        pathname !== "/pin" &&
         !isOpsPath(pathname)) ||
-      (session && !ops && !tenant && !onboarded && pathname === "/onboarding") ||
       (!session && guestPaths.has(pathname)));
 
   if (!allowed) {

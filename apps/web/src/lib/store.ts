@@ -1234,13 +1234,15 @@ export const useDemoStore = create<Store>()(
         ].sort((a, b) => (a.at < b.at ? 1 : -1)),
     }),
     {
-      name: "ioteedom-demo-v6",
-      version: 8,
+      name: "ioteedom-demo-v7",
+      version: 9,
       merge: (persistedState, currentState) => {
         const persisted = (persistedState ?? {}) as Partial<Store>;
         return {
           ...currentState,
           ...persisted,
+          session: null,
+          onboarded: false,
           houses: normalizeHouses(persisted.houses ?? currentState.houses),
           opsAccounts: persisted.opsAccounts ?? currentState.opsAccounts,
           opsActivityLog: persisted.opsActivityLog ?? currentState.opsActivityLog,
@@ -1251,11 +1253,7 @@ export const useDemoStore = create<Store>()(
         };
       },
       partialize: (state) => ({
-        session: state.session,
-        pin: state.pin,
-        onboarded: state.onboarded,
         profile: state.profile,
-        enabled: state.enabled,
         houses: state.houses,
         activePropertyId: state.activePropertyId,
         platformPayments: state.platformPayments,
@@ -1280,24 +1278,14 @@ export const useDemoStore = create<Store>()(
   ),
 );
 
+export { useEnabled } from "@/lib/session";
+
 export function useActiveHouse() {
   const houses = useDemoStore((s) => s.houses);
   const id = useDemoStore((s) => s.activePropertyId);
   const house = houses[id] ?? houses["east-legon"];
   if (house?.alerts && house.dismissedAlerts && house.usage) return house;
   return normalizeHouses(houses)[id] ?? normalizeHouses(houses)["east-legon"];
-}
-
-export function useEnabled() {
-  const role = useDemoStore((s) => s.session?.role);
-  const enabled = useDemoStore((s) => s.enabled);
-  if (role !== "tenant") return enabled;
-  return {
-    ...tenantEnabled,
-    ecg: enabled.ecg,
-    water: enabled.water,
-    meters: enabled.meters,
-  };
 }
 
 export function useTenantUnit() {

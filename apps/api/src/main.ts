@@ -5,6 +5,7 @@ import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import type { AppEnv } from "./config/env";
+import { SWAGGER_PATH, setupSwagger } from "./swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,10 +23,12 @@ async function bootstrap() {
     }),
   );
   app.enableCors({ origin, credentials: true });
+  setupSwagger(app);
   app.enableShutdownHooks();
 
   await app.listen(port);
   Logger.log(`API listening on http://localhost:${port}/v1`, "Bootstrap");
+  Logger.log(`Swagger http://localhost:${port}/${SWAGGER_PATH}`, "Bootstrap");
 }
 
 void bootstrap();
