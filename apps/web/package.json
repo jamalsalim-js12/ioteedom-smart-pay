@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "pnpm --filter @ioteedom/shared build",
     "build": "next build",
+    "prebuild": "pnpm --filter @ioteedom/shared build",
     "start": "next start",
     "codegen": "orval --config orval.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@ioteedom/shared": "workspace:*",
     "@tanstack/react-query": "^5.102.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

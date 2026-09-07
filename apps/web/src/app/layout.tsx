@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Figtree, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { RouteGate } from "@/components/auth/route-gate";
@@ -30,6 +30,10 @@ export const metadata: Metadata = {
   },
   description:
     "Pay ECG direct. Pay water to the owner, who pays Ghana Water. Meters, solar, EV — from one account.",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

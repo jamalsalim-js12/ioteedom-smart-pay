@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BrandPane } from "@/components/auth/brand-pane";
+import { AuthColumn, BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 
@@ -13,36 +13,37 @@ export default function SignupPage() {
     <>
       <BrandPane
         kicker="Smart Pay"
-        title="IoTeedom invites the house, then you work inside it."
-        body="Phone first — that’s how MoMo will find you. PIN is the one superadmin sent."
+        title="IoTeedom invites the house. Then you run the bills."
+        body="You sign in with the phone number and PIN they sent. That’s the same number MoMo will use."
       />
-      <div className="flex min-h-dvh items-center justify-center px-6 py-12">
-        <div className="enter w-full max-w-sm">
-          <div className="mb-8 lg:hidden">
-            <BrandMark size="md" />
-          </div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Invite only</p>
-          <h1 className="mt-2 font-display text-3xl tracking-tight">Wait for IoTeedom</h1>
-          <p className="mt-3 text-sm text-mute">
-            Superadmin invites property owners and chooses which features they can see. If you
-            already have an invite, sign in with that phone and PIN.
-          </p>
-          <Button
-            type="button"
-            className="mt-6 w-full"
-            size="lg"
-            onClick={() => router.replace("/login")}
-          >
+      <AuthColumn
+        className="enter"
+        onSubmit={(e) => {
+          e.preventDefault();
+          router.replace("/login");
+        }}
+        actions={
+          <Button type="submit" className="w-full" size="lg">
             I have an invite
           </Button>
-          <p className="mt-6 text-sm text-mute">
-            Already on the platform?{" "}
-            <Link href="/login" className="text-ink underline">
-              Sign in
-            </Link>
-          </p>
+        }
+      >
+        <div className="mb-8 lg:hidden">
+          <BrandMark size="md" />
         </div>
-      </div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Invite only</p>
+        <h1 className="mt-2 font-display text-3xl tracking-tight">You need an invite</h1>
+        <p className="mt-3 text-sm text-mute">
+          IoTeedom sets up the house and sends a phone number and PIN. If you already have those,
+          sign in.
+        </p>
+        <p className="mt-6 text-sm text-mute">
+          Already invited?{" "}
+          <Link href="/login" className="text-ink underline">
+            Sign in
+          </Link>
+        </p>
+      </AuthColumn>
     </>
   );
 }

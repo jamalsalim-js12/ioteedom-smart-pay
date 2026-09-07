@@ -103,7 +103,7 @@ export class AuthController {
     operationId: "postAuthPin",
     summary: "Replace PIN",
     description:
-      "Sets a new 4 to 6 digit PIN. `currentPin` is required unless `mustChangePin` is true (temporary PIN from invite).",
+      "Sets a new 4-digit PIN. `currentPin` is required unless `mustChangePin` is true (temporary PIN from invite).",
   })
   @ApiNoContentResponse({ description: "PIN updated." })
   @ApiUnauthorizedResponse({ description: "Access token or current PIN invalid." })

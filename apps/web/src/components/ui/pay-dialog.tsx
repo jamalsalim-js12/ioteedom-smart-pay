@@ -4,6 +4,13 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DialogActions,
+  DialogBackdrop,
+  DialogBody,
+  DialogHeader,
+  DialogPanel,
+} from "@/components/ui/dialog-frame";
 import { type BillId, type PaymentMethod, paymentMethods } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
@@ -113,59 +120,59 @@ export function PayDialog({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-scrim/45 transition-opacity duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-starting-style:opacity-0" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-5 outline-none transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
-          <Dialog.Title className="font-display text-xl tracking-tight">{title}</Dialog.Title>
-          <Dialog.Description className="mt-1 text-sm text-mute">
-            {settleAll
-              ? tenant
-                ? "ECG goes to ECG. Water goes to your landlord."
-                : house.kind === "estate"
-                  ? "This remits Ghana Water and any other owner bills. Tenant ECG stays with the tenant."
-                  : `${dueList.length} open bills on this account.`
-              : tenant && billId === "water"
-                ? `${unit?.waterM3 ?? "—"} m³ this cycle. This pays your landlord, not Ghana Water.`
-                : tenant && billId === "ecg"
-                  ? "This goes straight to ECG."
-                  : bill
-                    ? `${railHint(bill)} · ${bill.account} · ${bill.cycle}.`
-                    : ""}
-          </Dialog.Description>
+        <DialogBackdrop />
+        <DialogPanel>
+          <DialogHeader>
+            <Dialog.Title className="font-display text-xl tracking-tight">{title}</Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-mute">
+              {settleAll
+                ? tenant
+                  ? "ECG goes to ECG. Water goes to your landlord."
+                  : house.kind === "estate"
+                    ? "This remits Ghana Water and any other owner bills. Tenant ECG stays with the tenant."
+                    : `${dueList.length} open bills on this account.`
+                : tenant && billId === "water"
+                  ? `${unit?.waterM3 ?? "—"} m³ this cycle. This pays your landlord, not Ghana Water.`
+                  : tenant && billId === "ecg"
+                    ? "This goes straight to ECG."
+                    : bill
+                      ? `${railHint(bill)} · ${bill.account} · ${bill.cycle}.`
+                      : ""}
+            </Dialog.Description>
+          </DialogHeader>
+          <DialogBody>
+            <p className="font-display text-4xl tracking-tight tabular">{compactCedis(amount)}</p>
 
-          <p className="mt-5 font-display text-4xl tracking-tight tabular">
-            {compactCedis(amount)}
-          </p>
-
-          <p className="mt-5 mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            Pay with
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {paymentMethods.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setMethod(item.id)}
-                className={cn(
-                  "h-11 rounded-lg border text-sm font-medium transition-colors duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
-                  method === item.id
-                    ? "border-ink bg-ink text-on-ink"
-                    : "border-line bg-field text-ink hover:border-ink/30",
-                )}
-              >
-                {item.short}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-6 flex justify-end gap-2">
+            <p className="mt-5 mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+              Pay with
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {paymentMethods.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setMethod(item.id)}
+                  className={cn(
+                    "h-11 rounded-lg border text-sm font-medium transition-colors duration-150 ease-[var(--ease-out)] active:scale-[0.97]",
+                    method === item.id
+                      ? "border-ink bg-ink text-on-ink"
+                      : "border-line bg-field text-ink hover:border-ink/30",
+                  )}
+                >
+                  {item.short}
+                </button>
+              ))}
+            </div>
+          </DialogBody>
+          <DialogActions>
             <Button intent="ghost" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button onClick={confirm} disabled={busy || amount <= 0}>
               Confirm pay
             </Button>
-          </div>
-        </Dialog.Popup>
+          </DialogActions>
+        </DialogPanel>
       </Dialog.Portal>
     </Dialog.Root>
   );
