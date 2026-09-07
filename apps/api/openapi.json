@@ -3,11 +3,12 @@
   "paths": {
     "/v1/health": {
       "get": {
+        "description": "Public check used by load balancers and local smoke tests. Returns 503 when Postgres cannot be reached.",
         "operationId": "getHealth",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "API and Postgres are up.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17,7 +18,7 @@
             }
           },
           "503": {
-            "description": "",
+            "description": "Postgres is down.",
             "content": {
               "application/json": {
                 "schema": {
@@ -29,12 +30,13 @@
         },
         "summary": "API and Postgres liveness",
         "tags": [
-          "health"
+          "Health"
         ]
       }
     },
     "/v1/auth/login": {
       "post": {
+        "description": "Issues an access token and a refresh token. The refresh token is returned in the body and set as the httpOnly `refresh_token` cookie. First login with a temporary PIN sets `mustChangePin`.",
         "operationId": "postAuthLogin",
         "parameters": [],
         "requestBody": {
@@ -49,7 +51,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Session issued.",
             "content": {
               "application/json": {
                 "schema": {
@@ -59,24 +61,24 @@
             }
           },
           "401": {
-            "description": "Invalid phone or PIN"
+            "description": "Invalid phone or PIN."
           },
           "403": {
-            "description": "Account is suspended"
+            "description": "Account is suspended."
           },
           "429": {
-            "description": "Too many PIN attempts or login rate limit"
+            "description": "Too many PIN attempts or login rate limit."
           }
         },
         "summary": "Sign in with phone and PIN",
         "tags": [
-          "auth"
+          "Auth"
         ]
       }
     },
     "/v1/auth/refresh": {
       "post": {
-        "description": "Accepts `refreshToken` in the JSON body or the `refresh_token` httpOnly cookie.",
+        "description": "Accepts `refreshToken` in the JSON body or the `refresh_token` httpOnly cookie. Returns a new token pair and revokes the previous refresh token.",
         "operationId": "postAuthRefresh",
         "parameters": [],
         "requestBody": {
@@ -91,7 +93,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "New access and refresh tokens.",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,7 +103,7 @@
             }
           },
           "401": {
-            "description": "Refresh token missing or invalid"
+            "description": "Refresh token missing or invalid."
           }
         },
         "security": [
@@ -111,12 +113,13 @@
         ],
         "summary": "Rotate the refresh token",
         "tags": [
-          "auth"
+          "Auth"
         ]
       }
     },
     "/v1/auth/logout": {
       "post": {
+        "description": "Requires a Bearer access token. Revokes the presented refresh token (body or cookie) and clears the cookie.",
         "operationId": "postAuthLogout",
         "parameters": [],
         "requestBody": {
@@ -131,10 +134,10 @@
         },
         "responses": {
           "204": {
-            "description": ""
+            "description": "Refresh token revoked."
           },
           "401": {
-            "description": "Access token missing or invalid"
+            "description": "Access token missing or invalid."
           }
         },
         "security": [
@@ -147,12 +150,13 @@
         ],
         "summary": "Revoke the current refresh token",
         "tags": [
-          "auth"
+          "Auth"
         ]
       }
     },
     "/v1/auth/pin": {
       "post": {
+        "description": "Sets a new 4 to 6 digit PIN. `currentPin` is required unless `mustChangePin` is true (temporary PIN from invite).",
         "operationId": "postAuthPin",
         "parameters": [],
         "requestBody": {
@@ -167,10 +171,10 @@
         },
         "responses": {
           "204": {
-            "description": ""
+            "description": "PIN updated."
           },
           "401": {
-            "description": "Access token or current PIN invalid"
+            "description": "Access token or current PIN invalid."
           }
         },
         "security": [
@@ -180,17 +184,18 @@
         ],
         "summary": "Replace PIN",
         "tags": [
-          "auth"
+          "Auth"
         ]
       }
     },
     "/v1/me": {
       "get": {
+        "description": "Returns the signed-in household user (memberships and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
         "operationId": "getMe",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Current household user or staff profile.",
             "content": {
               "application/json": {
                 "schema": {
@@ -214,7 +219,7 @@
             }
           },
           "401": {
-            "description": "Access token missing or invalid"
+            "description": "Access token missing or invalid."
           }
         },
         "security": [
@@ -224,22 +229,86 @@
         ],
         "summary": "Current user or staff session",
         "tags": [
-          "me"
+          "Me"
+        ]
+      }
+    },
+    "/v1/onboarding/complete": {
+      "post": {
+        "description": "Owner-only. Confirms the invited property for the account and marks onboarding complete so the household dashboard is available.",
+        "operationId": "postOnboardingComplete",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteOnboardingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Account marked active.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingCompleteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Access token missing or invalid."
+          },
+          "403": {
+            "description": "Staff caller, or the account is suspended."
+          },
+          "404": {
+            "description": "No owner membership for this account."
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Confirm the invited property and mark the account active",
+        "tags": [
+          "Onboarding"
         ]
       }
     }
   },
   "info": {
     "title": "IoTeedom Smart Pay API",
-    "description": "Auth, session, and health endpoints for Smart Pay.",
+    "description": "Auth, session, onboarding, and health endpoints for Smart Pay.",
     "version": "0.1.0",
     "contact": {}
   },
-  "tags": [],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Phone and PIN sign-in, token refresh, logout, and PIN change."
+    },
+    {
+      "name": "Me",
+      "description": "The signed-in household user or IoTeedom staff member."
+    },
+    {
+      "name": "Onboarding",
+      "description": "First-login property confirmation for invited owners."
+    },
+    {
+      "name": "Health",
+      "description": "Liveness of the API process and Postgres."
+    }
+  ],
   "servers": [
     {
       "url": "http://localhost:3001",
-      "description": "local"
+      "description": "Local"
     }
   ],
   "components": {
@@ -372,6 +441,37 @@
           "newPin"
         ]
       },
+      "MePropertyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "address",
+          "city",
+          "kind"
+        ]
+      },
       "MeMembershipDto": {
         "type": "object",
         "properties": {
@@ -395,6 +495,19 @@
             ],
             "type": "string"
           },
+          "status": {
+            "enum": [
+              "invited",
+              "active",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "onboardedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
           "modules": {
             "type": "object",
             "additionalProperties": {
@@ -409,6 +522,12 @@
               "solar": false,
               "ev": false
             }
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MePropertyDto"
+            }
           }
         },
         "required": [
@@ -416,7 +535,9 @@
           "accountId",
           "accountName",
           "accountKind",
-          "modules"
+          "status",
+          "modules",
+          "properties"
         ]
       },
       "MeUserResponseDto": {
@@ -438,6 +559,10 @@
             "type": "string",
             "example": "233244128891"
           },
+          "phoneDisplay": {
+            "type": "string",
+            "example": "024 412 8891"
+          },
           "mustChangePin": {
             "type": "boolean"
           },
@@ -453,6 +578,7 @@
           "id",
           "name",
           "phone",
+          "phoneDisplay",
           "mustChangePin",
           "memberships"
         ]
@@ -476,6 +602,10 @@
             "type": "string",
             "example": "233200000001"
           },
+          "phoneDisplay": {
+            "type": "string",
+            "example": "020 000 0001"
+          },
           "role": {
             "enum": [
               "superadmin",
@@ -492,8 +622,56 @@
           "id",
           "name",
           "phone",
+          "phoneDisplay",
           "role",
           "mustChangePin"
+        ]
+      },
+      "CompleteOnboardingDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "description": "Owner account to finish inviting."
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "example": "12 Boundary Rd, East Legon"
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Accra"
+          }
+        },
+        "required": [
+          "accountId",
+          "address",
+          "city"
+        ]
+      },
+      "OnboardingCompleteResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active"
+            ]
+          },
+          "onboardedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "accountId",
+          "status",
+          "onboardedAt"
         ]
       }
     }

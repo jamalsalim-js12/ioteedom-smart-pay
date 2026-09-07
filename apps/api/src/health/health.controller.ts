@@ -9,16 +9,21 @@ import { Public } from "../auth/public.decorator";
 import { PrismaService } from "../prisma/prisma.service";
 import { HealthResponseDto } from "./dto/health-response.dto";
 
-@ApiTags("health")
+@ApiTags("Health")
 @Controller("health")
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Public()
   @Get()
-  @ApiOperation({ operationId: "getHealth", summary: "API and Postgres liveness" })
-  @ApiOkResponse({ type: HealthResponseDto })
-  @ApiServiceUnavailableResponse({ type: HealthResponseDto })
+  @ApiOperation({
+    operationId: "getHealth",
+    summary: "API and Postgres liveness",
+    description:
+      "Public check used by load balancers and local smoke tests. Returns 503 when Postgres cannot be reached.",
+  })
+  @ApiOkResponse({ type: HealthResponseDto, description: "API and Postgres are up." })
+  @ApiServiceUnavailableResponse({ type: HealthResponseDto, description: "Postgres is down." })
   async check(): Promise<HealthResponseDto> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;

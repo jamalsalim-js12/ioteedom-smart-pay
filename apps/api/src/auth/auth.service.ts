@@ -191,6 +191,7 @@ export class AuthService {
         id: staff.id,
         name: staff.name,
         phone: staff.phone,
+        phoneDisplay: staff.phoneDisplay,
         role: staff.role,
         mustChangePin: staff.mustChangePin,
       };
@@ -201,7 +202,12 @@ export class AuthService {
       include: {
         memberships: {
           include: {
-            account: { include: { modules: true } },
+            account: {
+              include: {
+                modules: true,
+                properties: { where: { deletedAt: null }, orderBy: { createdAt: "asc" } },
+              },
+            },
           },
         },
       },
@@ -212,15 +218,25 @@ export class AuthService {
       id: user.id,
       name: user.name,
       phone: user.phone,
+      phoneDisplay: user.phoneDisplay,
       mustChangePin: user.mustChangePin,
       memberships: user.memberships.map((membership) => ({
         role: membership.role,
         accountId: membership.accountId,
         accountName: membership.account.name,
         accountKind: membership.account.kind,
+        status: membership.account.status,
+        onboardedAt: membership.account.onboardedAt?.toISOString() ?? null,
         modules: Object.fromEntries(
           membership.account.modules.map((row) => [row.module, row.enabled]),
         ),
+        properties: membership.account.properties.map((property) => ({
+          id: property.id,
+          label: property.label,
+          address: property.address,
+          city: property.city,
+          kind: property.kind,
+        })),
       })),
     };
   }

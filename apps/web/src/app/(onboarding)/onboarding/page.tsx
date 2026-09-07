@@ -1,8 +1,10 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Receipt } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getGetMeQueryKey, usePostOnboardingComplete } from "@/api/generated/api";
+import { ApiError } from "@/api/mutator";
 import { BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -10,33 +12,53 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { serviceCatalog } from "@/data/demo";
 import { cn } from "@/lib/cn";
-import { useDemoStore } from "@/lib/store";
+import { useAuthSession, useEnabled } from "@/lib/session";
 
 const steps = ["House", "Modules", "Accounts"] as const;
 
 export default function OnboardingPage() {
-  const router = useRouter();
-  const profile = useDemoStore((s) => s.profile);
-  const enabled = useDemoStore((s) => s.enabled);
-  const completeOnboarding = useDemoStore((s) => s.completeOnboarding);
+  const complete = usePostOnboardingComplete();
+  const queryClient = useQueryClient();
+  const { session, signOut } = useAuthSession();
+  const enabled = useEnabled();
+  const membership =
+    session?.memberships.find((item) => !item.onboardedAt) ?? session?.memberships[0];
+  const seeded = membership?.properties[0];
   const [step, setStep] = useState(0);
-  const [property, setProperty] = useState(profile.property || "12 Boundary Rd, East Legon");
-  const [city, setCity] = useState(profile.city || "Accra");
-  const [ecgAccount, setEcgAccount] = useState("5418 2291 03");
-  const [waterAccount, setWaterAccount] = useState("W-ACC-209441");
+  const [property, setProperty] = useState(seeded?.address ?? "");
+  const [city, setCity] = useState(seeded?.city ?? "Accra");
+  const [ecgAccount, setEcgAccount] = useState("");
+  const [waterAccount, setWaterAccount] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  function next() {
+  useEffect(() => {
+    if (!seeded) return;
+    setProperty((current) => current || seeded.address);
+    setCity((current) => current || seeded.city);
+  }, [seeded]);
+
+  async function next() {
     if (step < 2) {
       setStep((s) => s + 1);
       return;
     }
-    completeOnboarding({
-      property,
-      city,
-      ecgAccount: enabled.ecg ? ecgAccount : undefined,
-      waterAccount: enabled.water ? waterAccount : undefined,
-    });
-    router.replace("/");
+    if (!membership) {
+      setError("No account is attached to this phone.");
+      return;
+    }
+    setError(null);
+    try {
+      await complete.mutateAsync({
+        data: {
+          accountId: membership.accountId,
+          address: property.trim(),
+          city: city.trim(),
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Could not finish onboarding.");
+    }
   }
 
   return (
@@ -152,6 +174,8 @@ export default function OnboardingPage() {
             ) : null}
           </div>
 
+          {error ? <p className="mt-4 text-sm text-alert">{error}</p> : null}
+
           <div className="mt-8 flex items-center gap-2">
             {step > 0 ? (
               <Button
@@ -164,10 +188,27 @@ export default function OnboardingPage() {
                 Back
               </Button>
             ) : null}
-            <Button type="button" className="flex-1" size="lg" onClick={next}>
-              {step === 2 ? "Open dashboard" : "Next"}
+            <Button
+              type="button"
+              className="flex-1"
+              size="lg"
+              disabled={complete.isPending || (step === 0 && (!property.trim() || !city.trim()))}
+              onClick={() => {
+                void next();
+              }}
+            >
+              {step === 2 ? (complete.isPending ? "Opening…" : "Open dashboard") : "Next"}
             </Button>
           </div>
+          <button
+            type="button"
+            className="mt-4 text-xs text-mute underline"
+            onClick={() => {
+              void signOut();
+            }}
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </>

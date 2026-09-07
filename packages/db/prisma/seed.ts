@@ -94,7 +94,12 @@ async function upsertAccount(input: { name: string; kind: "home" | "estate"; sta
   const existing = await prisma.account.findFirst({
     where: { name: input.name, kind: input.kind },
   });
-  if (existing) return existing;
+  if (existing) {
+    return prisma.account.update({
+      where: { id: existing.id },
+      data: { status: "invited", onboardedAt: null },
+    });
+  }
   return prisma.account.create({
     data: {
       id: ulid(),

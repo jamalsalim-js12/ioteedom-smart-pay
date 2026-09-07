@@ -1,5 +1,22 @@
 import { MODULE_IDS } from "@ioteedom/shared";
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+
+export class MePropertyDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  label!: string;
+
+  @ApiProperty()
+  address!: string;
+
+  @ApiProperty()
+  city!: string;
+
+  @ApiProperty({ enum: ["home", "estate"] })
+  kind!: "home" | "estate";
+}
 
 export class MeMembershipDto {
   @ApiProperty({ enum: ["owner", "manager"] })
@@ -14,12 +31,21 @@ export class MeMembershipDto {
   @ApiProperty({ enum: ["home", "estate"] })
   accountKind!: "home" | "estate";
 
+  @ApiProperty({ enum: ["invited", "active", "suspended"] })
+  status!: "invited" | "active" | "suspended";
+
+  @ApiPropertyOptional({ nullable: true, type: String, format: "date-time" })
+  onboardedAt!: string | null;
+
   @ApiProperty({
     type: "object",
     additionalProperties: { type: "boolean" },
     example: Object.fromEntries(MODULE_IDS.map((id) => [id, id === "ecg" || id === "water"])),
   })
   modules!: Record<string, boolean>;
+
+  @ApiProperty({ type: [MePropertyDto] })
+  properties!: MePropertyDto[];
 }
 
 export class MeUserResponseDto {
@@ -34,6 +60,9 @@ export class MeUserResponseDto {
 
   @ApiProperty({ example: "233244128891" })
   phone!: string;
+
+  @ApiProperty({ example: "024 412 8891" })
+  phoneDisplay!: string;
 
   @ApiProperty()
   mustChangePin!: boolean;
@@ -54,6 +83,9 @@ export class MeStaffResponseDto {
 
   @ApiProperty({ example: "233200000001" })
   phone!: string;
+
+  @ApiProperty({ example: "020 000 0001" })
+  phoneDisplay!: string;
 
   @ApiProperty({ enum: ["superadmin", "support"] })
   role!: "superadmin" | "support";

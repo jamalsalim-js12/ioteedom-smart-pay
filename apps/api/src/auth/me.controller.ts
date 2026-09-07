@@ -11,18 +11,24 @@ import {
 import { AuthService } from "./auth.service";
 import type { AuthPrincipal } from "./auth.types";
 import { CurrentUser } from "./current-user.decorator";
-import { MeStaffResponseDto, MeUserResponseDto } from "./dto/me-response.dto";
+import { MeMembershipDto, MeStaffResponseDto, MeUserResponseDto } from "./dto/me-response.dto";
 
-@ApiTags("me")
-@ApiExtraModels(MeUserResponseDto, MeStaffResponseDto)
+@ApiTags("Me")
+@ApiExtraModels(MeUserResponseDto, MeStaffResponseDto, MeMembershipDto)
 @Controller("me")
 export class MeController {
   constructor(private readonly auth: AuthService) {}
 
   @Get()
   @ApiBearerAuth("access-token")
-  @ApiOperation({ operationId: "getMe", summary: "Current user or staff session" })
+  @ApiOperation({
+    operationId: "getMe",
+    summary: "Current user or staff session",
+    description:
+      "Returns the signed-in household user (memberships and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
+  })
   @ApiOkResponse({
+    description: "Current household user or staff profile.",
     schema: {
       oneOf: [
         { $ref: getSchemaPath(MeUserResponseDto) },
@@ -37,7 +43,7 @@ export class MeController {
       },
     },
   })
-  @ApiUnauthorizedResponse({ description: "Access token missing or invalid" })
+  @ApiUnauthorizedResponse({ description: "Access token missing or invalid." })
   me(@CurrentUser() user: AuthPrincipal) {
     return this.auth.me(user);
   }

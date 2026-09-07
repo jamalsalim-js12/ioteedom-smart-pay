@@ -1,44 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { usePostAuthLogin } from "@/api/generated/api";
+import { ApiError } from "@/api/mutator";
 import { BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import {
-  DEMO_PHONE,
-  DEMO_PIN,
-  OPS_PHONE,
-  OPS_PIN,
-  TENANT_PHONE,
-  TENANT_PIN,
-  useDemoStore,
-} from "@/lib/store";
+import { useAuthSession } from "@/lib/session";
+
+export const SEED_OWNER_PHONE = "024 412 8891";
+export const SEED_OWNER_PIN = "2468";
+export const SEED_STAFF_PHONE = "020 000 0001";
+export const SEED_STAFF_PIN = "1357";
+
+function loginErrorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.status === 403) return "This account is suspended. Contact support.";
+    if (error.status === 429) return "Too many PIN attempts. Try again later.";
+    return error.message || "Phone or PIN does not match.";
+  }
+  return "Could not sign in. Try again.";
+}
 
 export default function LoginPage() {
-  const router = useRouter();
-  const signIn = useDemoStore((s) => s.signIn);
-  const resetDemo = useDemoStore((s) => s.resetDemo);
+  const login = usePostAuthLogin();
+  const { applyTokens } = useAuthSession();
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  async function submitPhone(nextPhone: string, nextPin: string) {
+    setError(null);
+    try {
+      const tokens = await login.mutateAsync({ data: { phone: nextPhone, pin: nextPin } });
+      applyTokens(tokens);
+    } catch (caught) {
+      setError(loginErrorMessage(caught));
+    }
+  }
+
   function submit(e: FormEvent) {
     e.preventDefault();
-    const result = signIn(phone, pin);
-    if (result) {
-      setError(result);
-      return;
-    }
-    const onboarded = useDemoStore.getState().onboarded;
-    const role = useDemoStore.getState().session?.role;
-    router.replace(
-      role === "ops" ? "/admin" : role === "tenant" || onboarded ? "/" : "/onboarding",
-    );
+    void submitPhone(phone, pin);
   }
+
+  const busy = login.isPending;
 
   return (
     <>
@@ -69,31 +78,26 @@ export default function LoginPage() {
               type="password"
               inputMode="numeric"
               autoComplete="current-password"
-              maxLength={4}
-              placeholder="4 digits"
+              maxLength={6}
+              placeholder="4 to 6 digits"
               value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
               required
             />
           </div>
           {error ? <p className="mt-3 text-sm text-alert">{error}</p> : null}
-          <Button type="submit" className="mt-6 w-full" size="lg">
-            Continue
+          <Button type="submit" className="mt-6 w-full" size="lg" disabled={busy}>
+            {busy ? "Signing in…" : "Continue"}
           </Button>
           <Button
             type="button"
             intent="ghost"
             className="mt-2 w-full"
+            disabled={busy}
             onClick={() => {
-              setPhone("024 412 8891");
-              setPin(DEMO_PIN);
-              const result = signIn(DEMO_PHONE, DEMO_PIN);
-              if (result) {
-                setError(result);
-                return;
-              }
-              const onboarded = useDemoStore.getState().onboarded;
-              router.replace(onboarded ? "/" : "/onboarding");
+              setPhone(SEED_OWNER_PHONE);
+              setPin(SEED_OWNER_PIN);
+              void submitPhone(SEED_OWNER_PHONE, SEED_OWNER_PIN);
             }}
           >
             Sign in as property owner
@@ -102,32 +106,11 @@ export default function LoginPage() {
             type="button"
             intent="ghost"
             className="mt-2 w-full"
+            disabled={busy}
             onClick={() => {
-              setPhone("024 555 6677");
-              setPin(TENANT_PIN);
-              const result = signIn(TENANT_PHONE, TENANT_PIN);
-              if (result) {
-                setError(result);
-                return;
-              }
-              router.replace("/");
-            }}
-          >
-            Sign in as tenant
-          </Button>
-          <Button
-            type="button"
-            intent="ghost"
-            className="mt-2 w-full"
-            onClick={() => {
-              setPhone("020 111 2233");
-              setPin(OPS_PIN);
-              const result = signIn(OPS_PHONE, OPS_PIN);
-              if (result) {
-                setError(result);
-                return;
-              }
-              router.replace("/admin");
+              setPhone(SEED_STAFF_PHONE);
+              setPin(SEED_STAFF_PIN);
+              void submitPhone(SEED_STAFF_PHONE, SEED_STAFF_PIN);
             }}
           >
             Sign in as operator
@@ -138,18 +121,6 @@ export default function LoginPage() {
               How invites work
             </Link>
           </p>
-          <button
-            type="button"
-            className="mt-4 text-xs text-mute underline"
-            onClick={() => {
-              resetDemo();
-              setPhone("");
-              setPin("");
-              setError(null);
-            }}
-          >
-            Clear saved session
-          </button>
         </form>
       </div>
     </>

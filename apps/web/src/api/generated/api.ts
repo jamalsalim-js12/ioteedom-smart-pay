@@ -105,6 +105,22 @@ export interface ChangePinDto {
   newPin: string;
 }
 
+export type MePropertyDtoKind = typeof MePropertyDtoKind[keyof typeof MePropertyDtoKind];
+
+
+export const MePropertyDtoKind = {
+  home: 'home',
+  estate: 'estate',
+} as const;
+
+export interface MePropertyDto {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  kind: MePropertyDtoKind;
+}
+
 export type MeMembershipDtoRole = typeof MeMembershipDtoRole[keyof typeof MeMembershipDtoRole];
 
 
@@ -121,6 +137,15 @@ export const MeMembershipDtoAccountKind = {
   estate: 'estate',
 } as const;
 
+export type MeMembershipDtoStatus = typeof MeMembershipDtoStatus[keyof typeof MeMembershipDtoStatus];
+
+
+export const MeMembershipDtoStatus = {
+  invited: 'invited',
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
 export type MeMembershipDtoModules = {[key: string]: boolean};
 
 export interface MeMembershipDto {
@@ -128,7 +153,11 @@ export interface MeMembershipDto {
   accountId: string;
   accountName: string;
   accountKind: MeMembershipDtoAccountKind;
+  status: MeMembershipDtoStatus;
+  /** @nullable */
+  onboardedAt?: string | null;
   modules: MeMembershipDtoModules;
+  properties: MePropertyDto[];
 }
 
 export type MeUserResponseDtoKind = typeof MeUserResponseDtoKind[keyof typeof MeUserResponseDtoKind];
@@ -143,6 +172,7 @@ export interface MeUserResponseDto {
   id: string;
   name: string;
   phone: string;
+  phoneDisplay: string;
   mustChangePin: boolean;
   memberships: MeMembershipDto[];
 }
@@ -167,8 +197,31 @@ export interface MeStaffResponseDto {
   id: string;
   name: string;
   phone: string;
+  phoneDisplay: string;
   role: MeStaffResponseDtoRole;
   mustChangePin: boolean;
+}
+
+export interface CompleteOnboardingDto {
+  /** Owner account to finish inviting. */
+  accountId: string;
+  /** @minLength 1 */
+  address: string;
+  /** @minLength 1 */
+  city: string;
+}
+
+export type OnboardingCompleteResponseDtoStatus = typeof OnboardingCompleteResponseDtoStatus[keyof typeof OnboardingCompleteResponseDtoStatus];
+
+
+export const OnboardingCompleteResponseDtoStatus = {
+  active: 'active',
+} as const;
+
+export interface OnboardingCompleteResponseDto {
+  accountId: string;
+  status: OnboardingCompleteResponseDtoStatus;
+  onboardedAt: string;
 }
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -738,3 +791,97 @@ export function useGetMe<TData = Awaited<ReturnType<typeof getMe>>, TError = Err
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
+
+export const getPostOnboardingCompleteUrl = () => {
+
+
+
+
+  return `/v1/onboarding/complete`
+}
+
+/**
+ * @summary Confirm the invited property and mark the account active
+ */
+export const postOnboardingComplete = async (completeOnboardingDto: CompleteOnboardingDto, options?: Parameters<typeof apiFetch>[1]): Promise<OnboardingCompleteResponseDto> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<OnboardingCompleteResponseDto>(getPostOnboardingCompleteUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(completeOnboardingDto)
+  }
+);}
+
+
+
+
+
+export const getPostOnboardingCompleteMutationKey = () => ['postOnboardingComplete'] as const;
+
+export const getPostOnboardingCompleteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOnboardingComplete>>, TError,PostOnboardingCompleteMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOnboardingComplete>>, TError,PostOnboardingCompleteMutationVariables, TContext> => {
+
+const mutationKey = getPostOnboardingCompleteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOnboardingComplete>>, PostOnboardingCompleteMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postOnboardingComplete(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOnboardingCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof postOnboardingComplete>>>
+    export type PostOnboardingCompleteMutationBody = BodyType<CompleteOnboardingDto>
+    export type PostOnboardingCompleteMutationError = ErrorType<void>
+    export type PostOnboardingCompleteMutationVariables = {data: BodyType<CompleteOnboardingDto>}
+
+    /**
+ * @summary Confirm the invited property and mark the account active
+ */
+export const usePostOnboardingComplete = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOnboardingComplete>>, TError,PostOnboardingCompleteMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOnboardingComplete>>,
+        TError,
+        PostOnboardingCompleteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOnboardingCompleteMutationOptions(options), queryClient);
+    }

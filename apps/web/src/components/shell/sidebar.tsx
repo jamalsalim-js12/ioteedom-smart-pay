@@ -8,7 +8,7 @@ import { AccountMenu } from "@/components/shell/account-menu";
 import { HouseSwitcher } from "@/components/shell/house-switcher";
 import type { ServiceId } from "@/data/demo";
 import { cn } from "@/lib/cn";
-import { useDemoStore, useEnabled } from "@/lib/store";
+import { useAuthSession, useEnabled } from "@/lib/session";
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutGrid },
@@ -29,7 +29,8 @@ const nav = [
 export function Sidebar() {
   const pathname = usePathname();
   const enabled = useEnabled();
-  const role = useDemoStore((s) => s.session?.role);
+  const { session } = useAuthSession();
+  const role = session?.role;
 
   return (
     <aside className="flex h-full w-[248px] shrink-0 flex-col bg-stub text-white">
@@ -43,7 +44,7 @@ export function Sidebar() {
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
         {nav.map((item) => {
           const hidden =
-            (item.href === "/services" && role === "tenant") ||
+            (item.href === "/services" && role !== "household") ||
             (item.service && !enabled[item.service]) ||
             (item.anyOf && !item.anyOf.some((id) => enabled[id]));
           if (hidden) return null;

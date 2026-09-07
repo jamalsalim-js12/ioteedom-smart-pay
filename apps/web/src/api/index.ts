@@ -3,5 +3,6 @@ export {
   ApiError,
   type BodyType,
   type ErrorType,
+  readAccessToken,
   setAccessToken,
 } from "./mutator";

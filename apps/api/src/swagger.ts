@@ -7,15 +7,19 @@ export const SWAGGER_JSON_PATH = "docs-json";
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle("IoTeedom Smart Pay API")
-    .setDescription("Auth, session, and health endpoints for Smart Pay.")
+    .setDescription("Auth, session, onboarding, and health endpoints for Smart Pay.")
     .setVersion("0.1.0")
+    .addTag("Auth", "Phone and PIN sign-in, token refresh, logout, and PIN change.")
+    .addTag("Me", "The signed-in household user or IoTeedom staff member.")
+    .addTag("Onboarding", "First-login property confirmation for invited owners.")
+    .addTag("Health", "Liveness of the API process and Postgres.")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
     .addCookieAuth("refresh_token", {
       type: "apiKey",
       in: "cookie",
       name: "refresh_token",
     })
-    .addServer("http://localhost:3001", "local")
+    .addServer("http://localhost:3001", "Local")
     .build();
 
   return SwaggerModule.createDocument(app, config);
