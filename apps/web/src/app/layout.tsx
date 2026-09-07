@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Figtree, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { RouteGate } from "@/components/auth/route-gate";
+import { QueryProvider } from "@/components/query-provider";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -40,7 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh font-sans antialiased">
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: FOUC-free theme boot before hydrate */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <RouteGate>{children}</RouteGate>
+        <QueryProvider>
+          <RouteGate>{children}</RouteGate>
+        </QueryProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{

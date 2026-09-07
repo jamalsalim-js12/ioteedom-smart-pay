@@ -8,7 +8,8 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
     "prestart:dev": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build",
-    "prebuild": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build"
+    "prebuild": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build",
+    "openapi": "nest build && node dist/openapi.js"
   },
   "dependencies": {
     "@ioteedom/db": "workspace:*",
@@ -16,8 +17,9 @@
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
-    "@nestjs/platform-express": "^11.1.6",
     "@nestjs/jwt": "^11.0.0",
+    "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/swagger": "^11.4.7",
     "@nestjs/throttler": "^6.4.0",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",

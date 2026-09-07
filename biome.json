@@ -13,7 +13,9 @@
       "!!**/.next",
       "!!**/.turbo",
       "!**/packages/db/src/generated",
-      "!**/packages/db/generated"
+      "!**/packages/db/generated",
+      "!**/apps/api/openapi.json",
+      "!**/apps/web/src/api/generated"
     ]
   },
   "formatter": {
