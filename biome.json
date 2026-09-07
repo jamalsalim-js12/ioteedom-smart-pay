@@ -60,6 +60,11 @@
     },
     {
       "includes": ["apps/api/**", "apps/worker/**"],
+      "javascript": {
+        "parser": {
+          "unsafeParameterDecoratorsEnabled": true
+        }
+      },
       "linter": {
         "rules": {
           "style": {
