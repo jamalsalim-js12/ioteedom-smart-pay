@@ -38,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${display.variable} ${body.variable} ${data.variable} min-h-dvh`}
     >
       <body className="min-h-dvh font-sans antialiased">
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: FOUC-free theme boot before hydrate */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <RouteGate>{children}</RouteGate>
         <Toaster

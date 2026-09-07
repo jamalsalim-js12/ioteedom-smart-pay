@@ -21,14 +21,8 @@ export function ProfileForm({ kind }: { kind: "household" | "ops" | "tenant" }) 
   const ops = kind === "ops";
   const tenant = kind === "tenant";
   const unit =
-    session?.role === "tenant"
-      ? house.units.find((item) => item.id === session.unitId)
-      : null;
-  const propertyValue = tenant
-    ? unit
-      ? `${unit.name} · ${house.label}`
-      : house.label
-    : property;
+    session?.role === "tenant" ? house.units.find((item) => item.id === session.unitId) : null;
+  const propertyValue = tenant ? (unit ? `${unit.name} · ${house.label}` : house.label) : property;
 
   const next = {
     name: name.trim(),

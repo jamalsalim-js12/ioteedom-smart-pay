@@ -21,15 +21,11 @@ export default function SignupPage() {
           <div className="mb-8 lg:hidden">
             <BrandMark size="md" />
           </div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            Invite only
-          </p>
-          <h1 className="mt-2 font-display text-3xl tracking-tight">
-            Wait for IoTeedom
-          </h1>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Invite only</p>
+          <h1 className="mt-2 font-display text-3xl tracking-tight">Wait for IoTeedom</h1>
           <p className="mt-3 text-sm text-mute">
-            Superadmin invites property owners and chooses which features they can
-            see. If you already have an invite, sign in with that phone and PIN.
+            Superadmin invites property owners and chooses which features they can see. If you
+            already have an invite, sign in with that phone and PIN.
           </p>
           <Button
             type="button"

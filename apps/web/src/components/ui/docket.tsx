@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { compactCedis } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { compactCedis } from "@/lib/format";
 
 const stubTone: Record<string, string> = {
   ECG: "bg-live",
@@ -76,11 +76,7 @@ export function Docket({
             </p>
           </div>
           {onPay ? (
-            <Button
-              intent={paid ? "ghost" : "primary"}
-              disabled={paid}
-              onClick={onPay}
-            >
+            <Button intent={paid ? "ghost" : "primary"} disabled={paid} onClick={onPay}>
               {paid ? "Paid" : "Pay now"}
             </Button>
           ) : null}

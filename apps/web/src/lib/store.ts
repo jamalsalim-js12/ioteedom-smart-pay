@@ -3,29 +3,29 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
+  airportAlerts,
+  airportBills,
+  airportPayments,
+  airportUnits,
+  airportUsage,
+  alerts,
   type BillId,
+  chargerSites,
+  defaultEnabled,
+  type EstateUnit,
+  evSessions,
+  evVehicle,
+  type HouseAlert,
+  homeEvents,
+  initialBills,
+  monthlyUsage,
+  namedModules,
   type PaymentMethod,
   type PaymentRail,
   type PaymentStatus,
   type PropertyId,
   type ServiceId,
-  airportBills,
-  airportPayments,
-  airportUnits,
-  airportAlerts,
-  airportUsage,
-  alerts,
-  chargerSites,
-  defaultEnabled,
-  evSessions,
-  evVehicle,
-  homeEvents,
-  initialBills,
-  monthlyUsage,
-  namedModules,
   seedPayments,
-  type EstateUnit,
-  type HouseAlert,
   type UsageMonth,
 } from "@/data/demo";
 import { platformPayments as seedPlatformPayments } from "@/data/platform";
@@ -138,10 +138,7 @@ export type HouseState = {
 };
 
 export function openAmount(house: HouseState) {
-  return (Object.values(house.bills) as BillState[]).reduce(
-    (sum, bill) => sum + bill.due,
-    0,
-  );
+  return (Object.values(house.bills) as BillState[]).reduce((sum, bill) => sum + bill.due, 0);
 }
 
 export const DEMO_PHONE = "0244128891";
@@ -268,8 +265,7 @@ function normalizeUnit(unit: Partial<EstateUnit>, index: number): EstateUnit {
 
 function normalizePayment(item: Payment): Payment {
   const payee =
-    item.payee ||
-    (item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—");
+    item.payee || (item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—");
   return {
     ...item,
     payee,
@@ -281,17 +277,13 @@ function seedPlatform(): Payment[] {
   return structuredClone(seedPlatformPayments).map((item) =>
     normalizePayment({
       ...item,
-      payee:
-        item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—",
+      payee: item.billId === "water" ? "Ghana Water" : item.billId === "ecg" ? "ECG" : "—",
       rail: "direct",
     }),
   );
 }
 
-function withHouseDefaults(
-  house: Partial<HouseState> | undefined,
-  seed: HouseState,
-): HouseState {
+function withHouseDefaults(house: Partial<HouseState> | undefined, seed: HouseState): HouseState {
   return {
     ...seed,
     ...house,
@@ -432,7 +424,10 @@ const initialState = {
   onboardedByAccount: { [AMA_OWNER_ID]: true } as Record<string, boolean>,
 };
 
-function activeHouse(state: { houses: Record<PropertyId, HouseState>; activePropertyId: PropertyId }) {
+function activeHouse(state: {
+  houses: Record<PropertyId, HouseState>;
+  activePropertyId: PropertyId;
+}) {
   return state.houses[state.activePropertyId];
 }
 
@@ -462,9 +457,7 @@ function settlePayment(
     return { ...house, wallet: Math.max(0, wallet) };
   }
   if (topUp && payment.billId === "ecg") {
-    const credit = Number(
-      ((house.bills.ecg.credit ?? 0) + (add ? amount : -amount)).toFixed(2),
-    );
+    const credit = Number(((house.bills.ecg.credit ?? 0) + (add ? amount : -amount)).toFixed(2));
     return {
       ...house,
       bills: {
@@ -483,9 +476,7 @@ function settlePayment(
         unit.id === payment.unitId
           ? {
               ...unit,
-              waterDue: Number(
-                Math.max(0, unit.waterDue + (add ? -amount : amount)).toFixed(2),
-              ),
+              waterDue: Number(Math.max(0, unit.waterDue + (add ? -amount : amount)).toFixed(2)),
             }
           : unit,
       ),
@@ -501,9 +492,7 @@ function settlePayment(
         ...house.bills,
         water: {
           ...house.bills.water,
-          due: Number(
-            Math.max(0, house.bills.water.due + (add ? -amount : amount)).toFixed(2),
-          ),
+          due: Number(Math.max(0, house.bills.water.due + (add ? -amount : amount)).toFixed(2)),
         },
       },
     };
@@ -515,9 +504,7 @@ function settlePayment(
         unit.id === payment.unitId
           ? {
               ...unit,
-              ecgDue: Number(
-                Math.max(0, unit.ecgDue + (add ? -amount : amount)).toFixed(2),
-              ),
+              ecgDue: Number(Math.max(0, unit.ecgDue + (add ? -amount : amount)).toFixed(2)),
             }
           : unit,
       ),
@@ -626,8 +613,7 @@ export const useDemoStore = create<Store>()(
         }
 
         if (invite) {
-          const modules =
-            state.accountModules[invite.id] ?? invite.modules;
+          const modules = state.accountModules[invite.id] ?? invite.modules;
           set({
             session: {
               role: "household",
@@ -652,8 +638,7 @@ export const useDemoStore = create<Store>()(
 
         if (demo) {
           const house = get().houses[get().activePropertyId];
-          const modules =
-            get().accountModules[AMA_OWNER_ID] ?? get().enabled;
+          const modules = get().accountModules[AMA_OWNER_ID] ?? get().enabled;
           set({
             session: {
               name: "Ama Mensah",
@@ -727,12 +712,7 @@ export const useDemoStore = create<Store>()(
                 : state.houses,
           };
         }),
-      completeOnboarding: ({
-        property,
-        city,
-        ecgAccount,
-        waterAccount,
-      }) =>
+      completeOnboarding: ({ property, city, ecgAccount, waterAccount }) =>
         set((state) => {
           const east = state.houses["east-legon"];
           const ownerId = state.activeOwnerId || AMA_OWNER_ID;
@@ -785,8 +765,7 @@ export const useDemoStore = create<Store>()(
               },
             },
             enabled:
-              (ownerId === AMA_OWNER_ID && state.session?.role === "household") ||
-              signedIn
+              (ownerId === AMA_OWNER_ID && state.session?.role === "household") || signedIn
                 ? nextModules
                 : state.enabled,
             opsActivityLog: [
@@ -843,10 +822,7 @@ export const useDemoStore = create<Store>()(
         set((state) => ({
           devicesOn: { ...state.devicesOn, [id]: next },
           houseEvents: labels[id]
-            ? [
-                { at: stamp(), text: labels[id][next ? 1 : 0] },
-                ...state.houseEvents,
-              ]
+            ? [{ at: stamp(), text: labels[id][next ? 1 : 0] }, ...state.houseEvents]
             : state.houseEvents,
         }));
       },
@@ -868,9 +844,7 @@ export const useDemoStore = create<Store>()(
         const payment: Payment = {
           id: `pmt_${Date.now()}_${billId}`,
           billId,
-          label: remitting
-            ? `Ghana Water · ${bill.cycle}`
-            : `${bill.destination} · ${bill.cycle}`,
+          label: remitting ? `Ghana Water · ${bill.cycle}` : `${bill.destination} · ${bill.cycle}`,
           amount,
           method,
           status: "success",
@@ -980,9 +954,7 @@ export const useDemoStore = create<Store>()(
         };
         patchHouse(set, (current) => ({
           ...current,
-          units: current.units.map((item) =>
-            item.id === unitId ? { ...item, ecgDue: 0 } : item,
-          ),
+          units: current.units.map((item) => (item.id === unitId ? { ...item, ecgDue: 0 } : item)),
           payments: [payment, ...current.payments],
         }));
         set({ receipt: payment });
@@ -1049,7 +1021,7 @@ export const useDemoStore = create<Store>()(
         for (const key of Object.keys(houses) as PropertyId[]) {
           const house = houses[key];
           const payment = house.payments.find((item) => item.id === id);
-          if (!payment || payment.status !== "failed") continue;
+          if (payment?.status !== "failed") continue;
           const next: Payment = {
             ...payment,
             status: "success",
@@ -1069,7 +1041,7 @@ export const useDemoStore = create<Store>()(
         }
         const platform = get().platformPayments;
         const extra = platform.find((item) => item.id === id);
-        if (!extra || extra.status !== "failed") return null;
+        if (extra?.status !== "failed") return null;
         const next: Payment = {
           ...extra,
           status: "success",
@@ -1088,7 +1060,7 @@ export const useDemoStore = create<Store>()(
         for (const key of Object.keys(houses) as PropertyId[]) {
           const house = houses[key];
           const payment = house.payments.find((item) => item.id === id);
-          if (!payment || payment.status !== "success") continue;
+          if (payment?.status !== "success") continue;
           const next: Payment = { ...payment, status: "refunded" };
           found = next;
           const settled = settlePayment(house, payment, "reverse");
@@ -1103,7 +1075,7 @@ export const useDemoStore = create<Store>()(
         }
         const platform = get().platformPayments;
         const extra = platform.find((item) => item.id === id);
-        if (!extra || extra.status !== "success") return null;
+        if (extra?.status !== "success") return null;
         const next: Payment = { ...extra, status: "refunded" };
         set({
           platformPayments: platform.map((item) => (item.id === id ? next : item)),
@@ -1144,10 +1116,7 @@ export const useDemoStore = create<Store>()(
         if (activeHouse(get()).wallet < 10) return "Wallet is too low. Top up first.";
         set((state) => ({
           chargingSite: site,
-          houseEvents: [
-            { at: stamp(), text: `Charging started at ${site}` },
-            ...state.houseEvents,
-          ],
+          houseEvents: [{ at: stamp(), text: `Charging started at ${site}` }, ...state.houseEvents],
         }));
         return null;
       },
@@ -1184,9 +1153,7 @@ export const useDemoStore = create<Store>()(
           houseEvents: [
             {
               at: stamp(),
-              text: state.solarExport
-                ? "Solar export to grid — off"
-                : "Solar export to grid — on",
+              text: state.solarExport ? "Solar export to grid — off" : "Solar export to grid — on",
             },
             ...state.houseEvents,
           ],
@@ -1279,8 +1246,7 @@ export const useDemoStore = create<Store>()(
           opsActivityLog: persisted.opsActivityLog ?? currentState.opsActivityLog,
           ownerInvites: persisted.ownerInvites ?? currentState.ownerInvites,
           accountModules: persisted.accountModules ?? currentState.accountModules,
-          onboardedByAccount:
-            persisted.onboardedByAccount ?? currentState.onboardedByAccount,
+          onboardedByAccount: persisted.onboardedByAccount ?? currentState.onboardedByAccount,
           activeOwnerId: persisted.activeOwnerId ?? currentState.activeOwnerId,
         };
       },

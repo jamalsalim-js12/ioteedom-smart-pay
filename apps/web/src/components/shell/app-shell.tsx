@@ -1,12 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { AccountMenu } from "@/components/shell/account-menu";
 import { NotificationsMenu } from "@/components/shell/notifications-menu";
 import { Sidebar } from "@/components/shell/sidebar";
-import { BrandMark } from "@/components/brand/brand-mark";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ReceiptDialog } from "@/components/ui/receipt-dialog";
 import { cn } from "@/lib/cn";
@@ -29,9 +29,7 @@ function MobileNav() {
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="min-w-0">
           <BrandMark size="sm" tone="onDark" />
-          <p className="mt-1 font-display text-lg leading-none tracking-tight">
-            Smart Pay
-          </p>
+          <p className="mt-1 font-display text-lg leading-none tracking-tight">Smart Pay</p>
         </Link>
         <div className="flex shrink-0 items-center gap-2">
           <NotificationsMenu tone="dark" />
@@ -41,10 +39,7 @@ function MobileNav() {
       </div>
       <div className="flex gap-1 overflow-x-auto px-3 pb-3">
         {links.map((link) => {
-          const active =
-            link.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(link.href);
+          const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}

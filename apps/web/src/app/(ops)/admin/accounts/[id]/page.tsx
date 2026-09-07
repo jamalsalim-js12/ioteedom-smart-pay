@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Receipt, Search } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Receipt, Search } from "lucide-react";
-import { ModuleToggles } from "@/components/ops/module-toggles";
+import { useState } from "react";
 import { Facts } from "@/components/ops/facts";
+import { ModuleToggles } from "@/components/ops/module-toggles";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -50,11 +50,7 @@ export default function OpsAccountDetailPage() {
         <OpsTopbar backHref="/admin/accounts" kicker="Not found" title="Account" />
         <div className="p-6">
           <Panel>
-            <EmptyState
-              icon={Search}
-              title="No account here"
-              body={`Nothing matches ${id}.`}
-            />
+            <EmptyState icon={Search} title="No account here" body={`Nothing matches ${id}.`} />
           </Panel>
         </div>
       </div>
@@ -86,9 +82,7 @@ export default function OpsAccountDetailPage() {
             <Field
               label="Account name"
               value={form.name}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, name: event.target.value }))
-              }
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
             />
             <Field
               label="Phone"
@@ -107,9 +101,7 @@ export default function OpsAccountDetailPage() {
             <Field
               label="City"
               value={form.city}
-              onChange={(event) =>
-                setForm((current) => ({ ...current, city: event.target.value }))
-              }
+              onChange={(event) => setForm((current) => ({ ...current, city: event.target.value }))}
             />
             <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
               <Button type="submit" intent="ink" size="sm">
@@ -141,19 +133,14 @@ export default function OpsAccountDetailPage() {
             eyebrow="Provisioning"
             title="Modules this owner can see"
             action={
-              invite?.pin ? (
-                <p className="font-mono text-xs text-mute">PIN {invite.pin}</p>
-              ) : null
+              invite?.pin ? <p className="font-mono text-xs text-mute">PIN {invite.pin}</p> : null
             }
           />
           <div className="px-5 py-4">
             <p className="mb-4 text-sm text-mute">
               Superadmin chooses the catalog. The owner cannot turn these on themselves.
             </p>
-            <ModuleToggles
-              value={modules}
-              onChange={(next) => setAccountModules(id, next)}
-            />
+            <ModuleToggles value={modules} onChange={(next) => setAccountModules(id, next)} />
           </div>
         </Panel>
 
@@ -161,9 +148,7 @@ export default function OpsAccountDetailPage() {
           <PanelHeader
             eyebrow={account.kind === "estate" ? "Estate" : "Household"}
             title={account.property}
-            action={
-              <p className="tabular font-medium">{compactCedis(account.open)}</p>
-            }
+            action={<p className="tabular font-medium">{compactCedis(account.open)}</p>}
           />
           <Facts
             rows={[
@@ -171,9 +156,7 @@ export default function OpsAccountDetailPage() {
               { label: "City", value: account.city },
               { label: "Last seen", value: account.lastSeen },
               { label: "Modules", value: account.modules.join(" · ") },
-              ...(account.units
-                ? [{ label: "Units", value: String(account.units) }]
-                : []),
+              ...(account.units ? [{ label: "Units", value: String(account.units) }] : []),
               { label: "Note", value: account.note },
             ]}
           />
@@ -211,13 +194,13 @@ export default function OpsAccountDetailPage() {
                   key={unit.id}
                   className="flex flex-wrap items-start justify-between gap-3 px-5 py-4"
                 >
-                    <div>
+                  <div>
                     <p className="font-medium">{unit.name}</p>
                     <p className="mt-1 text-sm text-mute">{unit.tenant}</p>
                   </div>
                   <p className="font-mono text-xs text-mute">
-                    ECG {compactCedis(unit.ecgDue)} (tenant) · water{" "}
-                    {compactCedis(unit.waterDue)} (collect)
+                    ECG {compactCedis(unit.ecgDue)} (tenant) · water {compactCedis(unit.waterDue)}{" "}
+                    (collect)
                   </p>
                 </li>
               ))}
@@ -229,9 +212,7 @@ export default function OpsAccountDetailPage() {
           <PanelHeader
             eyebrow="Rail"
             title="Related money"
-            action={
-              <p className="font-mono text-xs text-mute">{related.length} rows</p>
-            }
+            action={<p className="font-mono text-xs text-mute">{related.length} rows</p>}
           />
           {related.length === 0 ? (
             <EmptyState

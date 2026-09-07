@@ -96,10 +96,7 @@ export function nextDueBill(
     .sort((a, b) => parseBillDate(a.dueDate).getTime() - parseBillDate(b.dueDate).getTime())[0];
 }
 
-export function houseAlerts(
-  house: HouseState,
-  enabled: Record<ServiceId, boolean>,
-) {
+export function houseAlerts(house: HouseState, enabled: Record<ServiceId, boolean>) {
   return (house.alerts ?? []).filter(
     (item) => enabled[item.service] && !(house.dismissedAlerts ?? []).includes(item.id),
   );

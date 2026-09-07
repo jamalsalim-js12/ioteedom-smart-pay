@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { Inbox } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Kpi } from "@/components/ops/kpi";
 import { OpsTopbar } from "@/components/shell/ops-shell";
@@ -9,9 +9,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { paymentMethods } from "@/data/demo";
 import { platformChargers, platformIncidents } from "@/data/platform";
+import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
 import { useOpsSnapshot } from "@/lib/ops";
-import { cn } from "@/lib/cn";
 
 const tone = {
   warn: "border-l-alert",
@@ -21,8 +21,7 @@ const tone = {
 
 export default function OpsOverviewPage() {
   const router = useRouter();
-  const { accounts, payments, collected, open, failed, leakResolved } =
-    useOpsSnapshot();
+  const { accounts, payments, collected, open, failed, leakResolved } = useOpsSnapshot();
   const online = platformChargers.filter((site) => site.status === "online").length;
   const households = accounts.filter((item) => item.kind === "home").length;
   const estates = accounts.filter((item) => item.kind === "estate").length;
@@ -54,11 +53,7 @@ export default function OpsOverviewPage() {
             hint="Successful MoMo on the ledger"
             tone="live"
           />
-          <Kpi
-            label="Still open"
-            value={compactCedis(open)}
-            hint="Dues across every account"
-          />
+          <Kpi label="Still open" value={compactCedis(open)} hint="Dues across every account" />
           <Kpi
             label="Failed pays"
             value={String(failed)}
@@ -133,8 +128,7 @@ export default function OpsOverviewPage() {
                         <p className="text-sm font-medium">{item.label}</p>
                         <p className="mt-1 font-mono text-[11px] text-mute">
                           {item.propertyLabel || item.propertyId} ·{" "}
-                          {paymentMethods.find((m) => m.id === item.method)?.short} ·{" "}
-                          {item.status}
+                          {paymentMethods.find((m) => m.id === item.method)?.short} · {item.status}
                         </p>
                       </div>
                       <p className="tabular text-sm">{compactCedis(item.amount)}</p>

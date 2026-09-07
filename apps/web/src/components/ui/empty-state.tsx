@@ -17,10 +17,7 @@ export function EmptyState({
 }) {
   return (
     <div
-      className={cn(
-        "flex flex-col items-center justify-center px-6 py-12 text-center",
-        className,
-      )}
+      className={cn("flex flex-col items-center justify-center px-6 py-12 text-center", className)}
     >
       <span className="flex size-12 items-center justify-center rounded-full bg-field text-mute">
         <Icon size={22} strokeWidth={1.6} />

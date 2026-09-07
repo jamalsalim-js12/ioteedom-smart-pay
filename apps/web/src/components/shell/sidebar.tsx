@@ -1,27 +1,23 @@
 "use client";
 
+import { Car, Gauge, House, LayoutGrid, Receipt, SlidersHorizontal, Sun, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Car,
-  Gauge,
-  House,
-  LayoutGrid,
-  Receipt,
-  SlidersHorizontal,
-  Sun,
-  Zap,
-} from "lucide-react";
-import { type ServiceId } from "@/data/demo";
-import { cn } from "@/lib/cn";
-import { useDemoStore, useEnabled } from "@/lib/store";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { AccountMenu } from "@/components/shell/account-menu";
 import { HouseSwitcher } from "@/components/shell/house-switcher";
-import { BrandMark } from "@/components/brand/brand-mark";
+import type { ServiceId } from "@/data/demo";
+import { cn } from "@/lib/cn";
+import { useDemoStore, useEnabled } from "@/lib/store";
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutGrid },
-  { href: "/bills", label: "Bills", icon: Receipt, anyOf: ["ecg", "water", "utilities"] as ServiceId[] },
+  {
+    href: "/bills",
+    label: "Bills",
+    icon: Receipt,
+    anyOf: ["ecg", "water", "utilities"] as ServiceId[],
+  },
   { href: "/meters", label: "Meters", icon: Gauge, service: "meters" as ServiceId },
   { href: "/smart-home", label: "Smart home", icon: House, service: "smartHome" as ServiceId },
   { href: "/solar", label: "Solar", icon: Sun, service: "solar" as ServiceId },
@@ -40,9 +36,7 @@ export function Sidebar() {
       <div className="px-5 pt-6 pb-5">
         <Link href="/" className="block">
           <BrandMark size="md" tone="onDark" />
-          <p className="mt-3 font-display text-2xl leading-none tracking-tight">
-            Smart Pay
-          </p>
+          <p className="mt-3 font-display text-2xl leading-none tracking-tight">Smart Pay</p>
         </Link>
       </div>
 
@@ -54,10 +48,7 @@ export function Sidebar() {
             (item.anyOf && !item.anyOf.some((id) => enabled[id]));
           if (hidden) return null;
 
-          const active =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           const Icon = item.icon;
 
           return (
@@ -72,10 +63,7 @@ export function Sidebar() {
               )}
             >
               <span
-                className={cn(
-                  "h-4 w-0.5 rounded-full",
-                  active ? "bg-brass" : "bg-transparent",
-                )}
+                className={cn("h-4 w-0.5 rounded-full", active ? "bg-brass" : "bg-transparent")}
               />
               <Icon size={16} strokeWidth={1.75} />
               {item.label}
