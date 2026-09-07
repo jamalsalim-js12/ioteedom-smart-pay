@@ -1,7 +1,7 @@
 "use client";
 
 import { Switch } from "@base-ui/react/switch";
-import { serviceCatalog, type ServiceId } from "@/data/demo";
+import { type ServiceId, serviceCatalog } from "@/data/demo";
 import { cn } from "@/lib/cn";
 
 export function ModuleToggles({
@@ -27,9 +27,7 @@ export function ModuleToggles({
               <Switch.Root
                 checked={on}
                 disabled={disabled}
-                onCheckedChange={() =>
-                  onChange?.({ ...value, [service.id]: !on })
-                }
+                onCheckedChange={() => onChange?.({ ...value, [service.id]: !on })}
                 className={cn(
                   "relative flex h-7 w-12 shrink-0 rounded-full p-0.5 transition-colors duration-150 ease-[var(--ease-out)]",
                   on ? "bg-grid" : "bg-line",

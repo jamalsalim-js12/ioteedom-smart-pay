@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { MeterChart } from "@/components/charts/load";
+import { ModuleOff } from "@/components/shell/module-off";
+import { Topbar } from "@/components/shell/topbar";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { PayDialog } from "@/components/ui/pay-dialog";
-import { ModuleOff } from "@/components/shell/module-off";
-import { Topbar } from "@/components/shell/topbar";
 import { meter, meterDaily } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { waterToCollect } from "@/lib/house";
@@ -45,13 +45,13 @@ export default function MetersPage() {
             {tenant ? "This cycle" : "Last reading"}
           </p>
           <p className="mt-2 font-display text-4xl tracking-tight tabular">
-            {tenant ? (unit?.waterM3 ?? 0).toLocaleString("en-GH") : meter.reading.toLocaleString("en-GH")}
+            {tenant
+              ? (unit?.waterM3 ?? 0).toLocaleString("en-GH")
+              : meter.reading.toLocaleString("en-GH")}
             <span className="ml-1 text-lg text-mute">{meter.unit}</span>
           </p>
           <p className="mt-2 text-sm text-mute">
-            {tenant
-              ? `${unit?.name} · ${unit?.tenant}`
-              : `${meter.location} · ${meter.lastSeen}`}
+            {tenant ? `${unit?.name} · ${unit?.tenant}` : `${meter.location} · ${meter.lastSeen}`}
           </p>
           {tenant ? null : (
             <Button
@@ -68,9 +68,7 @@ export default function MetersPage() {
           )}
         </Panel>
         <Panel className="p-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            Status
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Status</p>
           <p
             className={
               leakResolved
@@ -137,11 +135,7 @@ export default function MetersPage() {
           </div>
         </Panel>
       </div>
-      <PayDialog
-        billId="water"
-        open={payWater}
-        onOpenChange={setPayWater}
-      />
+      <PayDialog billId="water" open={payWater} onOpenChange={setPayWater} />
     </div>
   );
 }

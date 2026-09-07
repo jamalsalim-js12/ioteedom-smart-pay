@@ -2,34 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Map,
-  MapControls,
-  MapMarker,
-  MarkerContent,
-  MarkerLabel,
-} from "@/components/ui/map";
 import { Kpi } from "@/components/ops/kpi";
 import { OpsTopbar } from "@/components/shell/ops-shell";
+import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel } from "@/components/ui/map";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { platformChargers } from "@/data/platform";
+import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
 import { chargerSlug } from "@/lib/ops";
-import { cn } from "@/lib/cn";
 
 const ACCRA: [number, number] = [-0.17, 5.61];
 
 export default function OpsChargersPage() {
   const router = useRouter();
   const online = platformChargers.filter((site) => site.status === "online");
-  const collected = platformChargers.reduce(
-    (sum, site) => sum + site.collectedToday,
-    0,
-  );
-  const sessions = platformChargers.reduce(
-    (sum, site) => sum + site.sessionsToday,
-    0,
-  );
+  const collected = platformChargers.reduce((sum, site) => sum + site.collectedToday, 0);
+  const sessions = platformChargers.reduce((sum, site) => sum + site.sessionsToday, 0);
 
   return (
     <div className="enter">
@@ -42,11 +30,7 @@ export default function OpsChargersPage() {
             tone={online.length < platformChargers.length ? "alert" : "ok"}
           />
           <Kpi label="Sessions today" value={String(sessions)} />
-          <Kpi
-            label="Collected today"
-            value={compactCedis(collected)}
-            tone="live"
-          />
+          <Kpi label="Collected today" value={compactCedis(collected)} tone="live" />
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-line bg-card">
@@ -58,9 +42,7 @@ export default function OpsChargersPage() {
                   key={site.name}
                   longitude={site.lng}
                   latitude={site.lat}
-                  onClick={() =>
-                    router.push(`/admin/chargers/${chargerSlug(site.name)}`)
-                  }
+                  onClick={() => router.push(`/admin/chargers/${chargerSlug(site.name)}`)}
                 >
                   <MarkerContent>
                     <span
@@ -91,8 +73,7 @@ export default function OpsChargersPage() {
                   <div>
                     <p className="font-medium">{site.name}</p>
                     <p className="mt-1 font-mono text-xs text-mute">
-                      {site.area} · {site.connectors} connectors · last{" "}
-                      {site.lastSession}
+                      {site.area} · {site.connectors} connectors · last {site.lastSession}
                     </p>
                   </div>
                   <div className="text-right">
@@ -105,8 +86,7 @@ export default function OpsChargersPage() {
                       {site.status}
                     </p>
                     <p className="mt-1 tabular text-sm">
-                      {site.sessionsToday} sessions ·{" "}
-                      {compactCedis(site.collectedToday)}
+                      {site.sessionsToday} sessions · {compactCedis(site.collectedToday)}
                     </p>
                   </div>
                 </Link>

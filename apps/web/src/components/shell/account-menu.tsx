@@ -1,8 +1,8 @@
 "use client";
 
+import { Menu } from "@base-ui/react/menu";
 import { LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Menu } from "@base-ui/react/menu";
 import { cn } from "@/lib/cn";
 import { useDemoStore } from "@/lib/store";
 
@@ -74,10 +74,7 @@ export function AccountMenu({
         {row ? (
           <span className="min-w-0 flex-1">
             <span
-              className={cn(
-                "block truncate text-sm font-medium",
-                dark ? "text-white" : "text-ink",
-              )}
+              className={cn("block truncate text-sm font-medium", dark ? "text-white" : "text-ink")}
             >
               {name}
             </span>
@@ -106,9 +103,7 @@ export function AccountMenu({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-ink">{name}</p>
-                <p className="mt-0.5 truncate font-mono text-[11px] text-mute">
-                  {email || phone}
-                </p>
+                <p className="mt-0.5 truncate font-mono text-[11px] text-mute">{email || phone}</p>
                 <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-mute">
                   {ops ? "Super admin" : "Household"}
                 </p>

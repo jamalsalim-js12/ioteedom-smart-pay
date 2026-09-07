@@ -125,7 +125,9 @@ body {
 
 body {
   font-family: var(--font-sans);
-  font-feature-settings: "ss01" on, "cv11" on;
+  font-feature-settings:
+    "ss01" on,
+    "cv11" on;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -158,11 +160,7 @@ body {
 }
 
 .docket-pips {
-  background-image: radial-gradient(
-    circle at 8px 0,
-    var(--field) 6px,
-    transparent 6.5px
-  );
+  background-image: radial-gradient(circle at 8px 0, var(--field) 6px, transparent 6.5px);
   background-size: 16px 10px;
   background-repeat: repeat-x;
 }

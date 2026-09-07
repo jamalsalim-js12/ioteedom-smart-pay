@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Receipt } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,7 @@ export default function OnboardingPage() {
   const enabled = useDemoStore((s) => s.enabled);
   const completeOnboarding = useDemoStore((s) => s.completeOnboarding);
   const [step, setStep] = useState(0);
-  const [property, setProperty] = useState(
-    profile.property || "12 Boundary Rd, East Legon",
-  );
+  const [property, setProperty] = useState(profile.property || "12 Boundary Rd, East Legon");
   const [city, setCity] = useState(profile.city || "Accra");
   const [ecgAccount, setEcgAccount] = useState("5418 2291 03");
   const [waterAccount, setWaterAccount] = useState("W-ACC-209441");
@@ -57,10 +55,7 @@ export default function OnboardingPage() {
             {steps.map((label, i) => (
               <li
                 key={label}
-                className={cn(
-                  "h-1 flex-1 rounded-full",
-                  i <= step ? "bg-live" : "bg-line",
-                )}
+                className={cn("h-1 flex-1 rounded-full", i <= step ? "bg-live" : "bg-line")}
               />
             ))}
           </ol>
@@ -68,9 +63,7 @@ export default function OnboardingPage() {
           <div key={step} className="enter">
             {step === 0 ? (
               <>
-                <h1 className="font-display text-3xl tracking-tight">
-                  Where should bills land?
-                </h1>
+                <h1 className="font-display text-3xl tracking-tight">Where should bills land?</h1>
                 <div className="mt-8 flex flex-col gap-4">
                   <Field
                     label="Property"
@@ -90,9 +83,7 @@ export default function OnboardingPage() {
 
             {step === 1 ? (
               <>
-                <h1 className="font-display text-3xl tracking-tight">
-                  What’s on this account
-                </h1>
+                <h1 className="font-display text-3xl tracking-tight">What’s on this account</h1>
                 <p className="mt-2 text-sm text-mute">
                   Superadmin picked these. You can’t add more from here.
                 </p>
@@ -108,15 +99,11 @@ export default function OnboardingPage() {
                       )}
                     >
                       <span>
-                        <span className="block font-medium">
-                          {service.name}
-                        </span>
+                        <span className="block font-medium">{service.name}</span>
                         <span
                           className={cn(
                             "mt-0.5 block text-sm",
-                            enabled[service.id]
-                              ? "text-on-ink/70"
-                              : "text-mute",
+                            enabled[service.id] ? "text-on-ink/70" : "text-mute",
                           )}
                         >
                           {service.blurb}
@@ -133,9 +120,7 @@ export default function OnboardingPage() {
 
             {step === 2 ? (
               <>
-                <h1 className="font-display text-3xl tracking-tight">
-                  Link the accounts
-                </h1>
+                <h1 className="font-display text-3xl tracking-tight">Link the accounts</h1>
                 <p className="mt-2 text-sm text-mute">
                   Meter or customer numbers from the last bill.
                 </p>

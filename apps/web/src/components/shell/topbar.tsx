@@ -6,13 +6,7 @@ import { NotificationsMenu } from "@/components/shell/notifications-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useActiveHouse, useDemoStore } from "@/lib/store";
 
-export function Topbar({
-  title,
-  kicker,
-}: {
-  title: string;
-  kicker?: string;
-}) {
+export function Topbar({ title, kicker }: { title: string; kicker?: string }) {
   const city = useDemoStore((s) => s.profile.city);
   const house = useActiveHouse();
 
@@ -20,9 +14,7 @@ export function Topbar({
     <header className="flex flex-col gap-3 border-b border-line px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {kicker ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            {kicker}
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">{kicker}</p>
         ) : null}
         <h1 className="font-display text-3xl tracking-tight text-ink">{title}</h1>
       </div>

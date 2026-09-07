@@ -8,7 +8,15 @@ import { BrandPane } from "@/components/auth/brand-pane";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { DEMO_PHONE, DEMO_PIN, OPS_PHONE, OPS_PIN, TENANT_PHONE, TENANT_PIN, useDemoStore } from "@/lib/store";
+import {
+  DEMO_PHONE,
+  DEMO_PIN,
+  OPS_PHONE,
+  OPS_PIN,
+  TENANT_PHONE,
+  TENANT_PIN,
+  useDemoStore,
+} from "@/lib/store";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +35,9 @@ export default function LoginPage() {
     }
     const onboarded = useDemoStore.getState().onboarded;
     const role = useDemoStore.getState().session?.role;
-    router.replace(role === "ops" ? "/admin" : role === "tenant" || onboarded ? "/" : "/onboarding");
+    router.replace(
+      role === "ops" ? "/admin" : role === "tenant" || onboarded ? "/" : "/onboarding",
+    );
   }
 
   return (
@@ -42,12 +52,8 @@ export default function LoginPage() {
           <div className="mb-8 lg:hidden">
             <BrandMark size="md" />
           </div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            Sign in
-          </p>
-          <h1 className="mt-2 font-display text-3xl tracking-tight">
-            Welcome back
-          </h1>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Sign in</p>
+          <h1 className="mt-2 font-display text-3xl tracking-tight">Welcome back</h1>
           <div className="mt-8 flex flex-col gap-4">
             <Field
               label="Phone"

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Map,
-  MapControls,
-  MapMarker,
-  MarkerContent,
-  MarkerLabel,
-} from "@/components/ui/map";
+import { Map, MapControls, MapMarker, MarkerContent, MarkerLabel } from "@/components/ui/map";
 import { chargerSites } from "@/data/demo";
 import { cn } from "@/lib/cn";
 
@@ -27,8 +21,7 @@ export function AccraMap({
         <Map center={ACCRA} zoom={12.15} theme="light">
           <MapControls position="bottom-right" />
           {chargerSites.map((site) => {
-            const active =
-              selected === site.name || chargingSite === site.name;
+            const active = selected === site.name || chargingSite === site.name;
             const online = site.status === "online";
             return (
               <MapMarker
@@ -60,8 +53,7 @@ export function AccraMap({
         </Map>
       </div>
       <p className="border-t border-line bg-card px-4 py-2 font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-        Tap a pin · {chargerSites.filter((s) => s.status === "online").length}{" "}
-        online
+        Tap a pin · {chargerSites.filter((s) => s.status === "online").length} online
       </p>
     </div>
   );

@@ -1,24 +1,19 @@
 "use client";
 
+import { BellOff, CircleCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { BellOff, CircleCheck } from "lucide-react";
+import { SpendChart, SpendTrendChart, UnitsChart, UsageChart } from "@/components/charts/load";
 import { Kpi } from "@/components/ops/kpi";
+import { Topbar } from "@/components/shell/topbar";
 import { AmountDialog } from "@/components/ui/amount-dialog";
 import { Button } from "@/components/ui/button";
 import { Docket } from "@/components/ui/docket";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { PayDialog } from "@/components/ui/pay-dialog";
-import { Topbar } from "@/components/shell/topbar";
-import {
-  SpendChart,
-  SpendTrendChart,
-  UnitsChart,
-  UsageChart,
-} from "@/components/charts/load";
-import { type BillId } from "@/data/demo";
+import type { BillId } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import {
   dueHint,
@@ -98,12 +93,7 @@ export default function OverviewPage() {
             }
             tone={totalDue > 0 ? "live" : "ok"}
           />
-          <Kpi
-            label={next.label}
-            value={next.value}
-            hint={next.hint}
-            tone={next.tone}
-          />
+          <Kpi label={next.label} value={next.value} hint={next.hint} tone={next.tone} />
           {enabled.ecg && !tenant && house.kind !== "estate" ? (
             <Kpi
               label="ECG credit"
@@ -141,7 +131,8 @@ export default function OverviewPage() {
               Top up ECG
             </Button>
           ) : null}
-          {enabled.water && (tenant ? due.some((bill) => bill.id === "water") : bills.water.due > 0) ? (
+          {enabled.water &&
+          (tenant ? due.some((bill) => bill.id === "water") : bills.water.due > 0) ? (
             <Button intent="water" onClick={() => setPayId("water")}>
               {tenant || house.kind !== "estate" ? "Pay water" : "Pay Ghana Water"}
             </Button>
@@ -153,11 +144,7 @@ export default function OverviewPage() {
             <PanelHeader
               eyebrow={house.label}
               title={
-                tenant
-                  ? "Your usage"
-                  : house.kind === "estate"
-                    ? "Estate load"
-                    : "Power and water"
+                tenant ? "Your usage" : house.kind === "estate" ? "Estate load" : "Power and water"
               }
             />
             <div className="h-64 px-2 pt-2 pb-4">
@@ -207,10 +194,7 @@ export default function OverviewPage() {
             {house.kind === "estate" && !tenant ? (
               <>
                 {enabled.water ? (
-                  <Docket
-                    {...house.bills.water}
-                    onPay={() => setPayId("water")}
-                  />
+                  <Docket {...house.bills.water} onPay={() => setPayId("water")} />
                 ) : null}
                 {(house.units ?? []).map((unit) => (
                   <article
@@ -221,14 +205,16 @@ export default function OverviewPage() {
                       <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
                         {unit.tenant}
                       </p>
-                      <p className="mt-1 font-display text-2xl tracking-tight">
-                        {unit.name}
-                      </p>
+                      <p className="mt-1 font-display text-2xl tracking-tight">{unit.name}</p>
                       <p className="mt-2 font-mono text-xs text-mute">
                         ECG {unit.ecgDue > 0 ? compactCedis(unit.ecgDue) : "paid"} · tenant pays ECG
                       </p>
                       <p className="mt-1 font-mono text-xs text-mute">
-                        Water {unit.waterDue > 0 ? `${compactCedis(unit.waterDue)} to collect` : "collected"} · {unit.waterM3} m³
+                        Water{" "}
+                        {unit.waterDue > 0
+                          ? `${compactCedis(unit.waterDue)} to collect`
+                          : "collected"}{" "}
+                        · {unit.waterM3} m³
                       </p>
                     </div>
                   </article>
@@ -243,140 +229,117 @@ export default function OverviewPage() {
                 />
               </Panel>
             ) : (
-              due.map((bill) => (
-                <Docket
-                  key={bill.id}
-                  {...bill}
-                  onPay={() => setPayId(bill.id)}
-                />
-              ))
+              due.map((bill) => <Docket key={bill.id} {...bill} onPay={() => setPayId(bill.id)} />)
             )}
           </div>
 
           <div className="flex flex-col gap-5">
-          {enabled.smartHome ? (
-            <Panel className="p-5">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-                House
-              </p>
-              <p className="mt-1 font-display text-xl tracking-tight">
-                Controls
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  intent={devicesOn.lock ? "ink" : "ghost"}
-                  onClick={() => {
-                    toggleDevice("lock");
-                    toast.success(
-                      devicesOn.lock ? "Front lock opened" : "Front lock closed",
-                    );
-                  }}
-                >
-                  {devicesOn.lock ? "Unlock door" : "Lock door"}
-                </Button>
-                <Button
-                  intent={devicesOn.lights ? "brass" : "ghost"}
-                  onClick={() => {
-                    toggleDevice("lights");
-                    toast.success(
-                      devicesOn.lights ? "Yard lights off" : "Yard lights on",
-                    );
-                  }}
-                >
-                  {devicesOn.lights ? "Lights off" : "Lights on"}
-                </Button>
-                <Button
-                  intent={devicesOn.ac ? "ink" : "ghost"}
-                  onClick={() => {
-                    toggleDevice("ac");
-                    toast.success(devicesOn.ac ? "AC off" : "AC on");
-                  }}
-                >
-                  {devicesOn.ac ? "AC off" : "AC on"}
-                </Button>
-              </div>
-            </Panel>
-          ) : null}
-
-          {enabled.ev && chargingSite ? (
-            <Panel className="p-5">
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-                Charging now
-              </p>
-              <p className="mt-2 font-display text-xl tracking-tight">
-                {chargingSite}
-              </p>
-              <Button
-                className="mt-4"
-                intent="ink"
-                onClick={() => {
-                  const session = stopCharge();
-                  if (session) {
-                    toast.success(
-                      `Stopped · ${session.kwh} kWh · ${compactCedis(session.amount)}`,
-                    );
-                  }
-                }}
-              >
-                Stop session
-              </Button>
-            </Panel>
-          ) : null}
-
-          <Panel>
-            <PanelHeader eyebrow="Watch" title="Needs a decision" />
-            {visibleAlerts.length === 0 ? (
-              <EmptyState
-                icon={BellOff}
-                title="No open alerts"
-                body="Nothing needs a decision on this house."
-              />
-            ) : (
-              <ul className="divide-y divide-line">
-                {visibleAlerts.map((item) => (
-                  <li
-                    key={item.id}
-                    className={`border-l-4 px-5 py-4 ${tone[item.tone]}`}
+            {enabled.smartHome ? (
+              <Panel className="p-5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">House</p>
+                <p className="mt-1 font-display text-xl tracking-tight">Controls</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    intent={devicesOn.lock ? "ink" : "ghost"}
+                    onClick={() => {
+                      toggleDevice("lock");
+                      toast.success(devicesOn.lock ? "Front lock opened" : "Front lock closed");
+                    }}
                   >
-                    <p className="font-medium">{item.title}</p>
-                    <p className="mt-1 text-sm text-mute">{item.body}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {item.id === "a1" && !house.leakResolved ? (
-                        <>
-                          <Button
-                            size="sm"
-                            intent="water"
-                            onClick={() => router.push("/meters")}
-                          >
-                            Inspect meter
+                    {devicesOn.lock ? "Unlock door" : "Lock door"}
+                  </Button>
+                  <Button
+                    intent={devicesOn.lights ? "brass" : "ghost"}
+                    onClick={() => {
+                      toggleDevice("lights");
+                      toast.success(devicesOn.lights ? "Yard lights off" : "Yard lights on");
+                    }}
+                  >
+                    {devicesOn.lights ? "Lights off" : "Lights on"}
+                  </Button>
+                  <Button
+                    intent={devicesOn.ac ? "ink" : "ghost"}
+                    onClick={() => {
+                      toggleDevice("ac");
+                      toast.success(devicesOn.ac ? "AC off" : "AC on");
+                    }}
+                  >
+                    {devicesOn.ac ? "AC off" : "AC on"}
+                  </Button>
+                </div>
+              </Panel>
+            ) : null}
+
+            {enabled.ev && chargingSite ? (
+              <Panel className="p-5">
+                <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
+                  Charging now
+                </p>
+                <p className="mt-2 font-display text-xl tracking-tight">{chargingSite}</p>
+                <Button
+                  className="mt-4"
+                  intent="ink"
+                  onClick={() => {
+                    const session = stopCharge();
+                    if (session) {
+                      toast.success(
+                        `Stopped · ${session.kwh} kWh · ${compactCedis(session.amount)}`,
+                      );
+                    }
+                  }}
+                >
+                  Stop session
+                </Button>
+              </Panel>
+            ) : null}
+
+            <Panel>
+              <PanelHeader eyebrow="Watch" title="Needs a decision" />
+              {visibleAlerts.length === 0 ? (
+                <EmptyState
+                  icon={BellOff}
+                  title="No open alerts"
+                  body="Nothing needs a decision on this house."
+                />
+              ) : (
+                <ul className="divide-y divide-line">
+                  {visibleAlerts.map((item) => (
+                    <li key={item.id} className={`border-l-4 px-5 py-4 ${tone[item.tone]}`}>
+                      <p className="font-medium">{item.title}</p>
+                      <p className="mt-1 text-sm text-mute">{item.body}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.id === "a1" && !house.leakResolved ? (
+                          <>
+                            <Button size="sm" intent="water" onClick={() => router.push("/meters")}>
+                              Inspect meter
+                            </Button>
+                            <Button
+                              size="sm"
+                              intent="ghost"
+                              onClick={() => {
+                                resolveLeak();
+                                toast.success("Leak watch cleared");
+                              }}
+                            >
+                              Mark resolved
+                            </Button>
+                          </>
+                        ) : null}
+                        {item.id === "a2" ? (
+                          <Button size="sm" onClick={() => setPayId("ecg")}>
+                            Pay ECG
                           </Button>
-                          <Button size="sm" intent="ghost" onClick={() => {
-                            resolveLeak();
-                            toast.success("Leak watch cleared");
-                          }}>
-                            Mark resolved
-                          </Button>
-                        </>
-                      ) : null}
-                      {item.id === "a2" ? (
-                        <Button size="sm" onClick={() => setPayId("ecg")}>
-                          Pay ECG
+                        ) : null}
+                        <Button size="sm" intent="ghost" onClick={() => dismissAlert(item.id)}>
+                          Dismiss
                         </Button>
-                      ) : null}
-                      <Button
-                        size="sm"
-                        intent="ghost"
-                        onClick={() => dismissAlert(item.id)}
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          </div>
         </div>
       </div>
 
@@ -387,12 +350,7 @@ export default function OverviewPage() {
           if (!open) setPayId(null);
         }}
       />
-      <PayDialog
-        billId={null}
-        settleAll
-        open={payAll}
-        onOpenChange={setPayAll}
-      />
+      <PayDialog billId={null} settleAll open={payAll} onOpenChange={setPayAll} />
       <AmountDialog
         open={topup}
         title="Top up ECG credit"

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { InviteOwnerDialog } from "@/components/ops/invite-owner-dialog";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Button } from "@/components/ui/button";
@@ -70,9 +70,7 @@ export default function OpsAccountsPage() {
           <PanelHeader
             eyebrow="Owners we invited"
             title="Everyone on the rails"
-            action={
-              <p className="font-mono text-xs text-mute">{open} with dues</p>
-            }
+            action={<p className="font-mono text-xs text-mute">{open} with dues</p>}
           />
           <div className="grid gap-3 border-b border-line px-5 py-4 md:grid-cols-4">
             <Field
@@ -85,9 +83,7 @@ export default function OpsAccountsPage() {
               label="Status"
               value={statusFilter}
               options={statusOptions}
-              onValueChange={(value) =>
-                setStatusFilter(value as "all" | "active" | "suspended")
-              }
+              onValueChange={(value) => setStatusFilter(value as "all" | "active" | "suspended")}
             />
             <SelectField
               label="City"
@@ -99,9 +95,7 @@ export default function OpsAccountsPage() {
               label="Open balance"
               value={openFilter}
               options={openOptions}
-              onValueChange={(value) =>
-                setOpenFilter(value as "all" | "has_open" | "zero_open")
-              }
+              onValueChange={(value) => setOpenFilter(value as "all" | "has_open" | "zero_open")}
             />
           </div>
           <ul className="divide-y divide-line">
@@ -157,9 +151,7 @@ export default function OpsAccountsPage() {
           <PanelHeader
             eyebrow="Audit trail"
             title="Recent admin actions"
-            action={
-              <p className="font-mono text-xs text-mute">{opsActivityLog.length} events</p>
-            }
+            action={<p className="font-mono text-xs text-mute">{opsActivityLog.length} events</p>}
           />
           <ul className="divide-y divide-line">
             {opsActivityLog.slice(0, 12).map((entry) => (

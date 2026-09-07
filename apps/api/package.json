@@ -1,0 +1,30 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "prestart:dev": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build",
+    "prebuild": "pnpm --filter @ioteedom/shared build && pnpm --filter @ioteedom/db build"
+  },
+  "dependencies": {
+    "@ioteedom/db": "workspace:*",
+    "@ioteedom/shared": "workspace:*",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.10",
+    "@nestjs/schematics": "^11.0.7",
+    "@types/express": "^5.0.3",
+    "@types/node": "^20.19.11",
+    "typescript": "^5.9.2"
+  }
+}

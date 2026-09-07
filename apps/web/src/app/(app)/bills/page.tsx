@@ -1,20 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Receipt } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ModuleOff } from "@/components/shell/module-off";
+import { Topbar } from "@/components/shell/topbar";
+import { AmountDialog } from "@/components/ui/amount-dialog";
 import { Button } from "@/components/ui/button";
 import { Docket } from "@/components/ui/docket";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { PayDialog } from "@/components/ui/pay-dialog";
-import { AmountDialog } from "@/components/ui/amount-dialog";
-import {
-  ViewReceiptButton,
-  paymentStatusClass,
-} from "@/components/ui/receipt-dialog";
-import { ModuleOff } from "@/components/shell/module-off";
-import { Topbar } from "@/components/shell/topbar";
-import { paymentMethods, type BillId } from "@/data/demo";
+import { paymentStatusClass, ViewReceiptButton } from "@/components/ui/receipt-dialog";
+import { type BillId, paymentMethods } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { visibleBills } from "@/lib/house";
 import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
@@ -28,14 +25,12 @@ export default function BillsPage() {
   const [payAll, setPayAll] = useState(false);
   const [topup, setTopup] = useState(false);
 
-  const visible = useMemo(
-    () => visibleBills(house, enabled, session),
-    [house, enabled, session],
-  );
+  const visible = useMemo(() => visibleBills(house, enabled, session), [house, enabled, session]);
   const tenant = session?.role === "tenant";
-  const payments = tenant && session.role === "tenant"
-    ? house.payments.filter((item) => item.unitId === session.unitId)
-    : house.payments;
+  const payments =
+    tenant && session.role === "tenant"
+      ? house.payments.filter((item) => item.unitId === session.unitId)
+      : house.payments;
   const totalDue = visible.reduce((sum, bill) => sum + bill.due, 0);
 
   if (!enabled.ecg && !enabled.water && !enabled.utilities) {
@@ -93,18 +88,13 @@ export default function BillsPage() {
                       <p className="font-medium">{item.label}</p>
                       <p className="mt-1 font-mono text-xs text-mute">
                         {item.payee} · {item.ref} ·{" "}
-                        {paymentMethods.find((m) => m.id === item.method)?.name} ·{" "}
-                        {item.at}
+                        {paymentMethods.find((m) => m.id === item.method)?.name} · {item.at}
                       </p>
                       <ViewReceiptButton payment={item} />
                     </div>
                     <div className="text-right">
-                      <p className="tabular font-medium">
-                        {compactCedis(item.amount)}
-                      </p>
-                      <p className={paymentStatusClass(item.status)}>
-                        {item.status}
-                      </p>
+                      <p className="tabular font-medium">{compactCedis(item.amount)}</p>
+                      <p className={paymentStatusClass(item.status)}>{item.status}</p>
                     </div>
                   </div>
                 </li>

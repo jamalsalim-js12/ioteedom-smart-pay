@@ -1,17 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Building2, Car, LayoutGrid, Radio, Receipt } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Building2,
-  Car,
-  LayoutGrid,
-  Radio,
-  Receipt,
-} from "lucide-react";
-import { AccountMenu } from "@/components/shell/account-menu";
+import type { ReactNode } from "react";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { AccountMenu } from "@/components/shell/account-menu";
 import { NotificationsMenu } from "@/components/shell/notifications-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ReceiptDialog } from "@/components/ui/receipt-dialog";
@@ -33,9 +27,7 @@ function OpsSidebar() {
       <div className="px-5 pt-6 pb-5">
         <Link href="/admin" className="block">
           <BrandMark size="md" tone="onDark" />
-          <p className="mt-3 font-display text-2xl leading-none tracking-tight">
-            Ops
-          </p>
+          <p className="mt-3 font-display text-2xl leading-none tracking-tight">Ops</p>
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
             Platform
           </p>
@@ -44,9 +36,7 @@ function OpsSidebar() {
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
         {nav.map((item) => {
           const active =
-            item.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(item.href);
+            item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link
@@ -60,10 +50,7 @@ function OpsSidebar() {
               )}
             >
               <span
-                className={cn(
-                  "h-4 w-0.5 rounded-full",
-                  active ? "bg-brass" : "bg-transparent",
-                )}
+                className={cn("h-4 w-0.5 rounded-full", active ? "bg-brass" : "bg-transparent")}
               />
               <Icon size={16} strokeWidth={1.75} />
               {item.label}
@@ -85,9 +72,7 @@ function OpsMobileNav() {
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <Link href="/admin" className="min-w-0">
           <BrandMark size="sm" tone="onDark" />
-          <p className="mt-1 font-display text-lg leading-none tracking-tight">
-            Ops
-          </p>
+          <p className="mt-1 font-display text-lg leading-none tracking-tight">Ops</p>
         </Link>
         <div className="flex shrink-0 items-center gap-2">
           <NotificationsMenu tone="dark" />
@@ -98,9 +83,7 @@ function OpsMobileNav() {
       <div className="flex gap-1 overflow-x-auto px-3 pb-3">
         {nav.map((link) => {
           const active =
-            link.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(link.href);
+            link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}
@@ -140,9 +123,7 @@ export function OpsTopbar({
           </Link>
         ) : null}
         {kicker ? (
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">
-            {kicker}
-          </p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">{kicker}</p>
         ) : null}
         <h1 className="font-display text-3xl tracking-tight text-ink">{title}</h1>
       </div>

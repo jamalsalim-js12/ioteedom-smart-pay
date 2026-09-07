@@ -4,11 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/lib/use-theme";
 
-export function ThemeToggle({
-  tone = "light",
-}: {
-  tone?: "light" | "dark";
-}) {
+export function ThemeToggle({ tone = "light" }: { tone?: "light" | "dark" }) {
   const { theme, setTheme } = useTheme();
   const chrome = tone === "dark";
 

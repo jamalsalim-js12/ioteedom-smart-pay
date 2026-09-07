@@ -1,8 +1,8 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { useDemoStore } from "@/lib/store";
 
@@ -45,7 +45,11 @@ export function RouteGate({ children }: { children: ReactNode }) {
       return;
     }
     if (session && ops) {
-      if (guestPaths.has(pathname) || pathname === "/onboarding" || (!isOpsPath(pathname) && !isPrintPath(pathname))) {
+      if (
+        guestPaths.has(pathname) ||
+        pathname === "/onboarding" ||
+        (!isOpsPath(pathname) && !isPrintPath(pathname))
+      ) {
         router.replace("/admin");
       }
       return;
@@ -71,9 +75,7 @@ export function RouteGate({ children }: { children: ReactNode }) {
 
   const allowed =
     hydrated &&
-    ((ops &&
-      session &&
-      (isOpsPath(pathname) || isPrintPath(pathname))) ||
+    ((ops && session && (isOpsPath(pathname) || isPrintPath(pathname))) ||
       (session &&
         tenant &&
         !guestPaths.has(pathname) &&

@@ -1,16 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { Receipt } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { OpsTopbar } from "@/components/shell/ops-shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import {
-  ViewReceiptButton,
-  paymentStatusClass,
-} from "@/components/ui/receipt-dialog";
+import { paymentStatusClass, ViewReceiptButton } from "@/components/ui/receipt-dialog";
 import { paymentMethods } from "@/data/demo";
 import { compactCedis } from "@/lib/format";
 import { propertyLabel, useOpsSnapshot } from "@/lib/ops";
@@ -30,11 +27,7 @@ export default function OpsPaymentsPage() {
           <PanelHeader
             eyebrow="Ledger"
             title="MoMo across the platform"
-            action={
-              <p className="font-mono text-xs text-mute">
-                {payments.length} rows
-              </p>
-            }
+            action={<p className="font-mono text-xs text-mute">{payments.length} rows</p>}
           />
           {payments.length === 0 ? (
             <EmptyState
@@ -45,8 +38,7 @@ export default function OpsPaymentsPage() {
           ) : (
             <ul className="divide-y divide-line">
               {payments.map((item) => {
-                const actions =
-                  item.status === "failed" || item.status === "success";
+                const actions = item.status === "failed" || item.status === "success";
                 return (
                   <li key={item.id} className="flex items-stretch">
                     <Link
@@ -58,17 +50,12 @@ export default function OpsPaymentsPage() {
                           <p className="font-medium">{item.label}</p>
                           <p className="mt-1 font-mono text-xs text-mute">
                             {item.ref} · {propertyLabel(item, houses)} ·{" "}
-                            {paymentMethods.find((m) => m.id === item.method)?.name}{" "}
-                            · {item.at}
+                            {paymentMethods.find((m) => m.id === item.method)?.name} · {item.at}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="tabular font-medium">
-                            {compactCedis(item.amount)}
-                          </p>
-                          <p className={paymentStatusClass(item.status)}>
-                            {item.status}
-                          </p>
+                          <p className="tabular font-medium">{compactCedis(item.amount)}</p>
+                          <p className={paymentStatusClass(item.status)}>{item.status}</p>
                         </div>
                       </div>
                     </Link>

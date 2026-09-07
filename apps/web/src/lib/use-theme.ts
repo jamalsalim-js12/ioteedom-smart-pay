@@ -7,13 +7,13 @@ let current: Theme = "light";
 const listeners = new Set<() => void>();
 
 function emit() {
-  listeners.forEach((listener) => listener());
+  listeners.forEach((listener) => {
+    listener();
+  });
 }
 
 if (typeof window !== "undefined") {
-  current = document.documentElement.classList.contains("dark")
-    ? "dark"
-    : readTheme();
+  current = document.documentElement.classList.contains("dark") ? "dark" : readTheme();
   applyTheme(current);
   window.addEventListener("storage", (event) => {
     if (event.key !== THEME_KEY || !isTheme(event.newValue)) return;

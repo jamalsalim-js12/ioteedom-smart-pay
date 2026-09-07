@@ -1,5 +1,5 @@
-import type { ButtonHTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 const button = cva(
@@ -10,8 +10,7 @@ const button = cva(
         primary: "bg-live text-paper hover:bg-live-hover",
         brass: "bg-brass text-paper hover:bg-brass-hover",
         ink: "bg-ink text-on-ink hover:bg-ink-2",
-        ghost:
-          "bg-transparent text-ink hover:bg-ink/5 border border-line",
+        ghost: "bg-transparent text-ink hover:bg-ink/5 border border-line",
         water: "bg-water text-paper hover:bg-water-hover",
       },
       size: {
@@ -27,11 +26,8 @@ const button = cva(
   },
 );
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
-  VariantProps<typeof button>;
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof button>;
 
 export function Button({ className, intent, size, ...props }: ButtonProps) {
-  return (
-    <button className={cn(button({ intent, size }), className)} {...props} />
-  );
+  return <button className={cn(button({ intent, size }), className)} {...props} />;
 }

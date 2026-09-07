@@ -3,11 +3,11 @@
 import { Zap } from "lucide-react";
 import { toast } from "sonner";
 import { ClimateChart, RoomsChart } from "@/components/charts/load";
+import { ModuleOff } from "@/components/shell/module-off";
+import { Topbar } from "@/components/shell/topbar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { ModuleOff } from "@/components/shell/module-off";
-import { Topbar } from "@/components/shell/topbar";
 import { devices } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { useDemoStore, useEnabled } from "@/lib/store";
@@ -148,13 +148,9 @@ export default function SmartHomePage() {
               {houseEvents.map((event) => (
                 <li
                   key={`${event.at}-${event.text}`}
-                  className={cn(
-                    "flex gap-4 border-b border-line px-5 py-3 last:border-0",
-                  )}
+                  className={cn("flex gap-4 border-b border-line px-5 py-3 last:border-0")}
                 >
-                  <p className="w-36 shrink-0 font-mono text-xs text-mute">
-                    {event.at}
-                  </p>
+                  <p className="w-36 shrink-0 font-mono text-xs text-mute">{event.at}</p>
                   <p className="text-sm">{event.text}</p>
                 </li>
               ))}

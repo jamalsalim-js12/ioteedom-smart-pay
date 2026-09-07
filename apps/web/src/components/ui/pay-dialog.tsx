@@ -4,11 +4,11 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { paymentMethods, type BillId, type PaymentMethod } from "@/data/demo";
+import { type BillId, type PaymentMethod, paymentMethods } from "@/data/demo";
+import { cn } from "@/lib/cn";
 import { compactCedis } from "@/lib/format";
 import { railHint } from "@/lib/house";
 import { useActiveHouse, useDemoStore, useEnabled } from "@/lib/store";
-import { cn } from "@/lib/cn";
 
 export function PayDialog({
   billId,
@@ -33,17 +33,13 @@ export function PayDialog({
   const [busy, setBusy] = useState(false);
 
   const tenant = session?.role === "tenant" ? session : null;
-  const unit = tenant
-    ? house.units.find((item) => item.id === tenant.unitId)
-    : null;
+  const unit = tenant ? house.units.find((item) => item.id === tenant.unitId) : null;
   const bill = billId ? bills[billId] : null;
-  const dueList = (Object.values(bills) as (typeof bills)[BillId][]).filter(
-    (item) => {
-      if (!enabled[item.service] || item.due <= 0) return false;
-      if (house.kind === "estate" && item.id === "ecg") return false;
-      return true;
-    },
-  );
+  const dueList = (Object.values(bills) as (typeof bills)[BillId][]).filter((item) => {
+    if (!enabled[item.service] || item.due <= 0) return false;
+    if (house.kind === "estate" && item.id === "ecg") return false;
+    return true;
+  });
   const tenantAmount = unit
     ? settleAll
       ? Number((unit.ecgDue + unit.waterDue).toFixed(2))
@@ -59,11 +55,7 @@ export function PayDialog({
       ? dueList.reduce((sum, item) => sum + item.due, 0)
       : (bill?.due ?? 0);
 
-  const destination = tenant
-    ? billId === "water"
-      ? house.ownerName
-      : "ECG"
-    : bill?.destination;
+  const destination = tenant ? (billId === "water" ? house.ownerName : "ECG") : bill?.destination;
   const title = settleAll
     ? "Pay everything due"
     : tenant && billId === "water"
@@ -123,9 +115,7 @@ export function PayDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-scrim/45 transition-opacity duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-starting-style:opacity-0" />
         <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-5 outline-none transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
-          <Dialog.Title className="font-display text-xl tracking-tight">
-            {title}
-          </Dialog.Title>
+          <Dialog.Title className="font-display text-xl tracking-tight">{title}</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-mute">
             {settleAll
               ? tenant
