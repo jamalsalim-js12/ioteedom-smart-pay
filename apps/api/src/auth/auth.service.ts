@@ -89,6 +89,9 @@ export class AuthService {
     }
 
     await this.clearFailures(principal);
+    if (principal.kind === "user") {
+      await this.acceptOwnerInvite(principal.phone);
+    }
     return this.issueSession(principal);
   }
 
@@ -236,6 +239,8 @@ export class AuthService {
           address: property.address,
           city: property.city,
           kind: property.kind,
+          ecgAccountNumber: property.ecgAccountNumber,
+          gwclAccountNumber: property.gwclAccountNumber,
         })),
       })),
     };
@@ -394,6 +399,13 @@ export class AuthService {
         ...(userId ? { userId } : { staffUserId }),
       },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  private async acceptOwnerInvite(phone: string) {
+    await this.prisma.invite.updateMany({
+      where: { phone, kind: "owner", acceptedAt: null },
+      data: { acceptedAt: new Date() },
     });
   }
 

@@ -16,6 +16,12 @@ export class MePropertyDto {
 
   @ApiProperty({ enum: ["home", "estate"] })
   kind!: "home" | "estate";
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  ecgAccountNumber!: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  gwclAccountNumber!: string | null;
 }
 
 export class MeMembershipDto {

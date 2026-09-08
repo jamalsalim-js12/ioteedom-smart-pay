@@ -279,11 +279,150 @@
           "Onboarding"
         ]
       }
+    },
+    "/v1/ops/invites": {
+      "post": {
+        "operationId": "postOpsInvites",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteOwnerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsInviteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": "Caller is not staff"
+          },
+          "409": {
+            "description": "Phone already on the platform"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Invite a property owner",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/accounts": {
+      "get": {
+        "operationId": "getOpsAccounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAccountListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List owner accounts",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/accounts/{id}": {
+      "get": {
+        "operationId": "getOpsAccountsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAccountListItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Owner account for support",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/audit": {
+      "get": {
+        "operationId": "getOpsAudit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAuditListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Recent staff audit events",
+        "tags": [
+          "ops"
+        ]
+      }
     }
   },
   "info": {
     "title": "IoTeedom Smart Pay API",
-    "description": "Auth, session, onboarding, and health endpoints for Smart Pay.",
+    "description": "Auth, session, ops invites, onboarding, and health for Smart Pay.",
     "version": "0.1.0",
     "contact": {}
   },
@@ -299,6 +438,10 @@
     {
       "name": "Onboarding",
       "description": "First-login property confirmation for invited owners."
+    },
+    {
+      "name": "ops",
+      "description": "Staff invite, account list, and audit. Suspend and module edits are later."
     },
     {
       "name": "Health",
@@ -464,11 +607,19 @@
             "type": "string"
           },
           "kind": {
-            "type": "string",
             "enum": [
               "home",
               "estate"
-            ]
+            ],
+            "type": "string"
+          },
+          "ecgAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "gwclAccountNumber": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -483,11 +634,11 @@
         "type": "object",
         "properties": {
           "role": {
-            "type": "string",
             "enum": [
               "owner",
               "manager"
-            ]
+            ],
+            "type": "string"
           },
           "accountId": {
             "type": "string"
@@ -496,19 +647,19 @@
             "type": "string"
           },
           "accountKind": {
-            "type": "string",
             "enum": [
               "home",
               "estate"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
-            "type": "string",
             "enum": [
               "invited",
               "active",
               "suspended"
-            ]
+            ],
+            "type": "string"
           },
           "onboardedAt": {
             "type": "string",
@@ -614,11 +765,11 @@
             "example": "020 000 0001"
           },
           "role": {
-            "type": "string",
             "enum": [
               "superadmin",
               "support"
-            ]
+            ],
+            "type": "string"
           },
           "mustChangePin": {
             "type": "boolean"
@@ -650,6 +801,16 @@
             "type": "string",
             "minLength": 1,
             "example": "Accra"
+          },
+          "ecgAccountNumber": {
+            "type": "string",
+            "example": "0412345678",
+            "description": "ECG customer or meter number."
+          },
+          "gwclAccountNumber": {
+            "type": "string",
+            "example": "2001234567",
+            "description": "Ghana Water customer number."
           }
         },
         "required": [
@@ -679,6 +840,242 @@
           "accountId",
           "status",
           "onboardedAt"
+        ]
+      },
+      "InviteOwnerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Kwame Boateng"
+          },
+          "phone": {
+            "type": "string",
+            "example": "024 555 0100"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "kwame@email.com"
+          },
+          "property": {
+            "type": "string",
+            "minLength": 1,
+            "example": "12 Boundary Rd, East Legon"
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Accra"
+          },
+          "kind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          },
+          "modules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "ecg": true,
+              "water": true,
+              "utilities": false,
+              "meters": false,
+              "smart_home": false,
+              "solar": false,
+              "ev": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "email",
+          "property",
+          "city",
+          "kind",
+          "modules"
+        ]
+      },
+      "OpsInviteResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "inviteId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phoneDisplay": {
+            "type": "string"
+          },
+          "pin": {
+            "type": "string",
+            "description": "Temporary PIN. Shown once in ops and logged in staging. Never stored."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": [
+          "accountId",
+          "inviteId",
+          "name",
+          "phoneDisplay",
+          "pin",
+          "expiresAt",
+          "modules"
+        ]
+      },
+      "OpsAccountListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phoneDisplay": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "invited",
+              "active",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "onboardedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "property": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "moduleFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "units": {
+            "type": "number"
+          },
+          "lastSeen": {
+            "type": "string",
+            "nullable": true
+          },
+          "inviteAcceptedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phoneDisplay",
+          "kind",
+          "status",
+          "property",
+          "city",
+          "modules",
+          "moduleFlags",
+          "units"
+        ]
+      },
+      "OpsAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsAccountListItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "OpsAuditItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorId",
+          "summary",
+          "at"
+        ]
+      },
+      "OpsAuditListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsAuditItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }

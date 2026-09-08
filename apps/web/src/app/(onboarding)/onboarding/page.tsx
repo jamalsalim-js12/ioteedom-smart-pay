@@ -27,14 +27,16 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [property, setProperty] = useState(seeded?.address ?? "");
   const [city, setCity] = useState(seeded?.city ?? "Accra");
-  const [ecgAccount, setEcgAccount] = useState("");
-  const [waterAccount, setWaterAccount] = useState("");
+  const [ecgAccount, setEcgAccount] = useState(seeded?.ecgAccountNumber ?? "");
+  const [waterAccount, setWaterAccount] = useState(seeded?.gwclAccountNumber ?? "");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!seeded) return;
     setProperty((current) => current || seeded.address);
     setCity((current) => current || seeded.city);
+    setEcgAccount((current) => current || seeded.ecgAccountNumber || "");
+    setWaterAccount((current) => current || seeded.gwclAccountNumber || "");
   }, [seeded]);
 
   async function next() {
@@ -46,6 +48,14 @@ export default function OnboardingPage() {
       setError("No house is linked to this phone.");
       return;
     }
+    if (enabled.ecg && !ecgAccount.trim()) {
+      setError("Add your ECG account number.");
+      return;
+    }
+    if (enabled.water && !waterAccount.trim()) {
+      setError("Add your Ghana Water account number.");
+      return;
+    }
     setError(null);
     try {
       await complete.mutateAsync({
@@ -53,6 +63,8 @@ export default function OnboardingPage() {
           accountId: membership.accountId,
           address: property.trim(),
           city: city.trim(),
+          ...(ecgAccount.trim() ? { ecgAccountNumber: ecgAccount.trim() } : {}),
+          ...(waterAccount.trim() ? { gwclAccountNumber: waterAccount.trim() } : {}),
         },
       });
       await queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });

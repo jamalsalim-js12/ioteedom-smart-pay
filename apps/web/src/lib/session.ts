@@ -45,6 +45,16 @@ const apiModuleToService: Record<string, ServiceId> = {
   ev: "ev",
 };
 
+const serviceToApiModule: Record<ServiceId, string> = {
+  ecg: "ecg",
+  water: "water",
+  utilities: "utilities",
+  meters: "meters",
+  smartHome: "smart_home",
+  solar: "solar",
+  ev: "ev",
+};
+
 export function enabledFromModules(modules: Record<string, boolean>): Record<ServiceId, boolean> {
   const enabled = blankModules();
   for (const [key, on] of Object.entries(modules)) {
@@ -52,6 +62,15 @@ export function enabledFromModules(modules: Record<string, boolean>): Record<Ser
     if (id) enabled[id] = on;
   }
   return enabled;
+}
+
+export function modulesToApi(modules: Record<ServiceId, boolean>): Record<string, boolean> {
+  return Object.fromEntries(
+    (Object.keys(serviceToApiModule) as ServiceId[]).map((id) => [
+      serviceToApiModule[id],
+      Boolean(modules[id]),
+    ]),
+  );
 }
 
 export function demoPropertyId(kind: "home" | "estate"): PropertyId {

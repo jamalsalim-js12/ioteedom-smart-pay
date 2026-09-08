@@ -1,8 +1,15 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  getGetOpsAccountsQueryKey,
+  getGetOpsAuditQueryKey,
+  usePostOpsInvites,
+} from "@/api/generated/api";
+import { ApiError } from "@/api/mutator";
 import { ModuleToggles } from "@/components/ops/module-toggles";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +22,12 @@ import {
 import { Field } from "@/components/ui/field";
 import { SelectField } from "@/components/ui/select";
 import { blankModules, type ServiceId } from "@/data/demo";
-import { useDemoStore } from "@/lib/store";
+import { modulesToApi } from "@/lib/session";
 
 const starter: Record<ServiceId, boolean> = {
   ...blankModules(),
   ecg: true,
   water: true,
-  meters: true,
 };
 
 export function InviteOwnerDialog({
@@ -31,7 +37,8 @@ export function InviteOwnerDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const inviteOwner = useDemoStore((s) => s.inviteOwner);
+  const invite = usePostOpsInvites();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -50,23 +57,35 @@ export function InviteOwnerDialog({
     setModules(starter);
   }
 
-  function submit() {
+  async function submit() {
     if (!name.trim() || !phone.trim() || !email.trim() || !property.trim()) {
       toast.error("Fill in the owner and the property.");
       return;
     }
-    const invite = inviteOwner({
-      name,
-      phone,
-      email,
-      property,
-      city,
-      kind,
-      modules,
-    });
-    toast.success(`Invite sent. PIN ${invite.pin} — they sign in with this phone.`);
-    reset();
-    onOpenChange(false);
+    try {
+      const created = await invite.mutateAsync({
+        data: {
+          name: name.trim(),
+          phone,
+          email: email.trim(),
+          property: property.trim(),
+          city: city.trim(),
+          kind,
+          modules: modulesToApi(modules),
+        },
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: getGetOpsAccountsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getGetOpsAuditQueryKey() }),
+      ]);
+      toast.success(`Invite sent. PIN ${created.pin} — they sign in with this phone.`);
+      reset();
+      onOpenChange(false);
+    } catch (caught) {
+      toast.error(
+        caught instanceof ApiError ? caught.message : "We couldn’t send the invite. Try again.",
+      );
+    }
   }
 
   if (!open) return null;
@@ -135,8 +154,8 @@ export function InviteOwnerDialog({
             <Button intent="ghost" type="button" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={submit}>
-              Send invite
+            <Button type="button" disabled={invite.isPending} onClick={() => void submit()}>
+              {invite.isPending ? "Sending…" : "Send invite"}
             </Button>
           </DialogActions>
         </DialogPanel>
