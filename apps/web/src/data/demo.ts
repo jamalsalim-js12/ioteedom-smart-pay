@@ -19,14 +19,6 @@ export type EstateUnit = {
 
 export type BillId = "ecg" | "water" | "waste" | "internet";
 
-export const profile = {
-  name: "Ama Mensah",
-  phone: "024 412 8891",
-  email: "ama.mensah@email.com",
-  property: "12 Boundary Rd, East Legon",
-  city: "Accra",
-};
-
 export const serviceCatalog: {
   id: ServiceId;
   name: string;

@@ -59,7 +59,7 @@ export type Session =
     }
   | { role: "ops"; name: string; phone: string; email: string };
 
-export type Profile = {
+type Profile = {
   name: string;
   phone: string;
   email: string;
@@ -79,7 +79,7 @@ export type ChargeSession = {
 
 export type OpsAccountStatus = "active" | "suspended";
 
-export type OpsAccountPatch = {
+type OpsAccountPatch = {
   name?: string;
   phone?: string;
   property?: string;
@@ -88,7 +88,7 @@ export type OpsAccountPatch = {
   modules?: Record<ServiceId, boolean>;
 };
 
-export type OpsActivityEntry = {
+type OpsActivityEntry = {
   id: string;
   at: string;
   actor: string;
@@ -141,22 +141,12 @@ export function openAmount(house: HouseState) {
   return (Object.values(house.bills) as BillState[]).reduce((sum, bill) => sum + bill.due, 0);
 }
 
-export const DEMO_PHONE = "0244128891";
-export const DEMO_PIN = "2468";
-export const TENANT_PHONE = "0245556677";
-export const TENANT_PIN = "3579";
-export const OPS_PHONE = "0201112233";
-export const OPS_PIN = "1357";
-
-export const tenantEnabled: Record<ServiceId, boolean> = {
-  ecg: true,
-  water: true,
-  utilities: false,
-  meters: true,
-  smartHome: false,
-  solar: false,
-  ev: false,
-};
+const DEMO_PHONE = "0244128891";
+const DEMO_PIN = "2468";
+const TENANT_PHONE = "0245556677";
+const TENANT_PIN = "3579";
+const OPS_PHONE = "0201112233";
+const OPS_PIN = "1357";
 
 const allOff: Record<ServiceId, boolean> = {
   ecg: false,

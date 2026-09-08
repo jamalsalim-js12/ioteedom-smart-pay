@@ -121,5 +121,3 @@ export function AccountMenu({
     </Menu.Root>
   );
 }
-
-export { AccountMenu as ProfileButton };

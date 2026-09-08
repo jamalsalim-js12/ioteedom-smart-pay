@@ -9,7 +9,7 @@ import type {
 } from "@/api/generated/api";
 import { blankModules, type PropertyId, type ServiceId } from "@/data/demo";
 
-export type AppRole = "household" | "ops";
+type AppRole = "household" | "ops";
 
 export type SessionView = {
   role: AppRole;
@@ -77,7 +77,7 @@ export function demoPropertyId(kind: "home" | "estate"): PropertyId {
   return kind === "estate" ? "airport" : "east-legon";
 }
 
-export function isMeUser(me: MeUserResponseDto | MeStaffResponseDto): me is MeUserResponseDto {
+function isMeUser(me: MeUserResponseDto | MeStaffResponseDto): me is MeUserResponseDto {
   return me.kind === "user";
 }
 
