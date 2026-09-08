@@ -17,12 +17,12 @@ const months: Record<string, number> = {
   Dec: 11,
 };
 
-export function parseBillDate(value: string) {
+function parseBillDate(value: string) {
   const [day, month, year] = value.split(" ");
   return new Date(Number(year), months[month] ?? 0, Number(day));
 }
 
-export function isOverdue(dueDate: string) {
+function isOverdue(dueDate: string) {
   const due = parseBillDate(dueDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -39,7 +39,7 @@ export function railHint(bill: BillState) {
   return `Goes to ${bill.destination}`;
 }
 
-export function tenantBills(house: HouseState, unit: EstateUnit): BillState[] {
+function tenantBills(house: HouseState, unit: EstateUnit): BillState[] {
   return [
     {
       ...house.bills.ecg,

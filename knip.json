@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "workspaces": {
+    "apps/api": {
+      "entry": ["src/main.ts", "src/openapi.ts"]
+    },
+    "apps/web": {
+      "ignoreIssues": {
+        "src/api/generated/**": ["exports", "types"],
+        "src/components/ui/map.tsx": ["exports", "types"]
+      }
+    },
+    "packages/db": {
+      "ignoreDependencies": ["@prisma/client"]
+    }
+  }
+}

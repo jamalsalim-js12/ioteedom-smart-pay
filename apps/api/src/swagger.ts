@@ -2,7 +2,7 @@ import { type INestApplication } from "@nestjs/common";
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from "@nestjs/swagger";
 
 export const SWAGGER_PATH = "docs";
-export const SWAGGER_JSON_PATH = "docs-json";
+const SWAGGER_JSON_PATH = "docs-json";
 
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
