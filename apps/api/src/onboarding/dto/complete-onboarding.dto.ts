@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, MinLength } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional, IsString, MinLength } from "class-validator";
 
 export class CompleteOnboardingDto {
   @ApiProperty({ description: "Owner account to finish inviting." })
@@ -15,6 +15,19 @@ export class CompleteOnboardingDto {
   @IsString()
   @MinLength(1)
   city!: string;
+
+  @ApiPropertyOptional({ example: "0412345678", description: "ECG customer or meter number." })
+  @IsOptional()
+  @IsString()
+  ecgAccountNumber?: string;
+
+  @ApiPropertyOptional({
+    example: "2001234567",
+    description: "Ghana Water customer number.",
+  })
+  @IsOptional()
+  @IsString()
+  gwclAccountNumber?: string;
 }
 
 export class OnboardingCompleteResponseDto {

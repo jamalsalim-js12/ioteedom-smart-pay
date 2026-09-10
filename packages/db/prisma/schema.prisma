@@ -70,25 +70,112 @@ enum ActorType {
   system
 }
 
+enum UtilityService {
+  ecg
+  water
+  waste
+  internet
+}
+
+enum UtilityMode {
+  prepaid
+  postpaid
+  unknown
+}
+
+enum BillType {
+  ecg_postpaid
+  ecg_prepaid
+  water_tenant
+  water_gwcl
+  utility
+}
+
+enum PaymentRail {
+  direct
+  collect
+  remit
+}
+
+enum PayeeType {
+  ecg
+  gwcl
+  owner
+  utility
+  ev_wallet
+}
+
+enum BillStatus {
+  open
+  paid
+  void
+}
+
+enum PaymentStatus {
+  created
+  pending
+  succeeded
+  failed
+  expired
+  refunded
+}
+
+enum PaymentMethod {
+  mtn
+  telecel
+  at
+  card
+}
+
+enum CollectionStatus {
+  none
+  pending
+  succeeded
+  failed
+}
+
+enum FulfillmentStatus {
+  not_required
+  pending
+  succeeded
+  failed
+}
+
+enum LedgerKind {
+  ecg_out
+  water_collect_in
+  water_remit_out
+  utility_out
+  wallet_in
+  wallet_out
+  fee
+}
+
+enum LedgerDirection {
+  debit
+  credit
+}
+
 /// Household person. Role is membership, not a column here.
 model User {
-  id              String     @id
-  phone           String     @unique
-  phoneDisplay    String     @map("phone_display")
-  email           String?
-  name            String
-  pinHash         String     @map("pin_hash")
-  mustChangePin   Boolean    @default(true) @map("must_change_pin")
-  status          UserStatus @default(active)
-  pinFailedCount  Int        @default(0) @map("pin_failed_count")
-  pinLockedUntil  DateTime?  @map("pin_locked_until") @db.Timestamptz
-  lastSeenAt      DateTime?  @map("last_seen_at") @db.Timestamptz
-  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
-  deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz
+  id             String     @id
+  phone          String     @unique
+  phoneDisplay   String     @map("phone_display")
+  email          String?
+  name           String
+  pinHash        String     @map("pin_hash")
+  mustChangePin  Boolean    @default(true) @map("must_change_pin")
+  status         UserStatus @default(active)
+  pinFailedCount Int        @default(0) @map("pin_failed_count")
+  pinLockedUntil DateTime?  @map("pin_locked_until") @db.Timestamptz
+  lastSeenAt     DateTime?  @map("last_seen_at") @db.Timestamptz
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt      DateTime?  @map("deleted_at") @db.Timestamptz
 
-  memberships    Membership[]
-  occupancies    Occupancy[]
-  refreshTokens  RefreshToken[]
+  memberships   Membership[]
+  occupancies   Occupancy[]
+  refreshTokens RefreshToken[]
+  payments      Payment[]
 
   @@map("users")
 }
@@ -109,39 +196,42 @@ model StaffUser {
   lastSeenAt     DateTime?  @map("last_seen_at") @db.Timestamptz
   createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz
 
-  accountsCreated Account[]        @relation("AccountCreatedBy")
-  modulesSet      AccountModule[]  @relation("ModuleSetBy")
+  accountsCreated Account[]       @relation("AccountCreatedBy")
+  modulesSet      AccountModule[] @relation("ModuleSetBy")
   refreshTokens   RefreshToken[]
 
   @@map("staff_users")
 }
 
 model Account {
-  id                String        @id
-  name              String
-  kind              AccountKind
-  status            AccountStatus @default(invited)
-  onboardedAt       DateTime?     @map("onboarded_at") @db.Timestamptz
-  createdByStaffId  String        @map("created_by_staff_id")
-  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  id               String        @id
+  name             String
+  kind             AccountKind
+  status           AccountStatus @default(invited)
+  onboardedAt      DateTime?     @map("onboarded_at") @db.Timestamptz
+  createdByStaffId String        @map("created_by_staff_id")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
 
-  createdByStaff StaffUser        @relation("AccountCreatedBy", fields: [createdByStaffId], references: [id])
+  createdByStaff StaffUser       @relation("AccountCreatedBy", fields: [createdByStaffId], references: [id])
   modules        AccountModule[]
   memberships    Membership[]
   properties     Property[]
   invites        Invite[]
   auditLogs      AuditLog[]
+  bills          Bill[]
+  payments       Payment[]
+  ledgerEntries  LedgerEntry[]
 
   @@index([createdByStaffId])
   @@map("accounts")
 }
 
 model AccountModule {
-  accountId    String    @map("account_id")
+  accountId    String   @map("account_id")
   module       ModuleId
   enabled      Boolean
-  setByStaffId String    @map("set_by_staff_id")
-  setAt        DateTime  @default(now()) @map("set_at") @db.Timestamptz
+  setByStaffId String   @map("set_by_staff_id")
+  setAt        DateTime @default(now()) @map("set_at") @db.Timestamptz
 
   account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   setByStaff StaffUser @relation("ModuleSetBy", fields: [setByStaffId], references: [id])
@@ -152,11 +242,11 @@ model AccountModule {
 }
 
 model Membership {
-  id        String          @id
-  userId    String          @map("user_id")
-  accountId String          @map("account_id")
+  id        String         @id
+  userId    String         @map("user_id")
+  accountId String         @map("account_id")
   role      MembershipRole
-  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz
 
   user    User    @relation(fields: [userId], references: [id])
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -167,19 +257,25 @@ model Membership {
 }
 
 model Property {
-  id                         String         @id
-  accountId                  String         @map("account_id")
-  label                      String
-  address                    String
-  city                       String
-  kind                       PropertyKind
-  waterTariffPesewasPerM3    BigInt?        @map("water_tariff_pesewas_per_m3")
-  status                     PropertyStatus @default(active)
-  createdAt                  DateTime       @default(now()) @map("created_at") @db.Timestamptz
-  deletedAt                  DateTime?      @map("deleted_at") @db.Timestamptz
+  id                      String         @id
+  accountId               String         @map("account_id")
+  label                   String
+  address                 String
+  city                    String
+  kind                    PropertyKind
+  waterTariffPesewasPerM3 BigInt?        @map("water_tariff_pesewas_per_m3")
+  ecgAccountNumber        String?        @map("ecg_account_number")
+  gwclAccountNumber       String?        @map("gwcl_account_number")
+  status                  PropertyStatus @default(active)
+  createdAt               DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt               DateTime?      @map("deleted_at") @db.Timestamptz
 
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  units   Unit[]
+  account         Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  units           Unit[]
+  utilityAccounts UtilityAccount[]
+  bills           Bill[]
+  payments        Payment[]
+  ledgerEntries   LedgerEntry[]
 
   @@index([accountId])
   @@map("properties")
@@ -191,9 +287,12 @@ model Unit {
   name       String
   sortOrder  Int    @default(0) @map("sort_order")
 
-  property    Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  occupancies Occupancy[]
-  invites     Invite[]
+  property        Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  occupancies     Occupancy[]
+  invites         Invite[]
+  utilityAccounts UtilityAccount[]
+  bills           Bill[]
+  payments        Payment[]
 
   @@index([propertyId])
   @@map("units")
@@ -206,8 +305,10 @@ model Occupancy {
   startedAt DateTime  @map("started_at") @db.Timestamptz
   endedAt   DateTime? @map("ended_at") @db.Timestamptz
 
-  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id])
+  unit     Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id])
+  bills    Bill[]
+  payments Payment[]
 
   @@index([userId])
   @@index([unitId])
@@ -273,4 +374,129 @@ model AuditLog {
   @@index([accountId, at(sort: Desc)])
   @@index([targetType, targetId])
   @@map("audit_log")
+}
+
+/// Biller numbers for a property meter (unit_id null) or a unit meter.
+/// One ECG ledger per meter. GWCL is property-level (unit_id null).
+/// Uniqueness is enforced in SQL: utility_accounts_one_per_unit_service /
+/// utility_accounts_one_property_service.
+model UtilityAccount {
+  id            String         @id
+  propertyId    String         @map("property_id")
+  unitId        String?        @map("unit_id")
+  service       UtilityService
+  biller        String
+  accountNumber String         @map("account_number")
+  meterNumber   String?        @map("meter_number")
+  mode          UtilityMode    @default(unknown)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unit     Unit?    @relation(fields: [unitId], references: [id])
+  bills    Bill[]
+
+  @@index([propertyId])
+  @@index([unitId])
+  @@map("utility_accounts")
+}
+
+model Bill {
+  id                    String      @id
+  type                  BillType
+  rail                  PaymentRail
+  accountId             String      @map("account_id")
+  propertyId            String      @map("property_id")
+  unitId                String?     @map("unit_id")
+  occupancyId           String?     @map("occupancy_id")
+  utilityAccountId      String?     @map("utility_account_id")
+  cycle                 String
+  dueAt                 DateTime?   @map("due_at") @db.Date
+  currency              String      @default("GHS")
+  amountDuePesewas      BigInt      @map("amount_due_pesewas")
+  amountOriginalPesewas BigInt      @map("amount_original_pesewas")
+  payeeType             PayeeType   @map("payee_type")
+  payeeLabel            String      @map("payee_label")
+  status                BillStatus  @default(open)
+  usageM3               Decimal?    @map("usage_m3") @db.Decimal(12, 3)
+  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  account        Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  property       Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unit           Unit?           @relation(fields: [unitId], references: [id])
+  occupancy      Occupancy?      @relation(fields: [occupancyId], references: [id])
+  utilityAccount UtilityAccount? @relation(fields: [utilityAccountId], references: [id])
+  payments       Payment[]
+
+  @@index([accountId, status])
+  @@index([propertyId])
+  @@index([occupancyId])
+  @@index([utilityAccountId])
+  @@map("bills")
+}
+
+model Payment {
+  id                String            @id
+  ourRef            String            @unique @map("our_ref")
+  billId            String?           @map("bill_id")
+  retryOfId         String?           @map("retry_of_id")
+  accountId         String            @map("account_id")
+  propertyId        String            @map("property_id")
+  unitId            String?           @map("unit_id")
+  occupancyId       String?           @map("occupancy_id")
+  payerUserId       String            @map("payer_user_id")
+  payeeType         PayeeType         @map("payee_type")
+  payeeLabel        String            @map("payee_label")
+  rail              PaymentRail
+  method            PaymentMethod
+  currency          String            @default("GHS")
+  amountPesewas     BigInt            @map("amount_pesewas")
+  status            PaymentStatus     @default(created)
+  provider          String            @default("paystack")
+  providerRef       String?           @map("provider_ref")
+  transferCode      String?           @map("transfer_code")
+  billerRef         String?           @map("biller_ref")
+  collectionStatus  CollectionStatus  @default(none) @map("collection_status")
+  fulfillmentStatus FulfillmentStatus @default(not_required) @map("fulfillment_status")
+  idempotencyKey    String            @unique @map("idempotency_key")
+  failureCode       String?           @map("failure_code")
+  receiptUrl        String?           @map("receipt_url")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  bill          Bill?         @relation(fields: [billId], references: [id])
+  retryOf       Payment?      @relation("PaymentRetry", fields: [retryOfId], references: [id])
+  retries       Payment[]     @relation("PaymentRetry")
+  account       Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unit          Unit?         @relation(fields: [unitId], references: [id])
+  occupancy     Occupancy?    @relation(fields: [occupancyId], references: [id])
+  payer         User          @relation(fields: [payerUserId], references: [id])
+  ledgerEntries LedgerEntry[]
+
+  @@index([accountId, createdAt(sort: Desc)])
+  @@index([providerRef])
+  @@index([billId])
+  @@index([payerUserId])
+  @@map("payments")
+}
+
+/// Append-only. Amounts are always positive pesewas.
+model LedgerEntry {
+  id            String          @id
+  paymentId     String          @map("payment_id")
+  accountId     String          @map("account_id")
+  propertyId    String          @map("property_id")
+  kind          LedgerKind
+  direction     LedgerDirection
+  amountPesewas BigInt          @map("amount_pesewas")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  payment  Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  account  Account  @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId])
+  @@index([accountId, createdAt(sort: Desc)])
+  @@index([propertyId, kind])
+  @@map("ledger_entries")
 }

@@ -12,7 +12,7 @@ import {
   useDemoStore,
 } from "@/lib/store";
 
-export type OpsAccount = (typeof platformAccounts)[number] & {
+type OpsAccount = (typeof platformAccounts)[number] & {
   live: boolean;
   status: OpsAccountStatus;
   inviteStatus?: "invited" | "active";

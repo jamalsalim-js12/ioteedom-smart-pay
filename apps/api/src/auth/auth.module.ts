@@ -9,6 +9,7 @@ import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { LoginThrottlerGuard } from "./login-throttler.guard";
 import { MeController } from "./me.controller";
+import { StaffGuard } from "./staff.guard";
 
 @Module({
   imports: [
@@ -29,7 +30,12 @@ import { MeController } from "./me.controller";
     }),
   ],
   controllers: [AuthController, MeController],
-  providers: [AuthService, LoginThrottlerGuard, { provide: APP_GUARD, useClass: JwtAuthGuard }],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    LoginThrottlerGuard,
+    StaffGuard,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
+  exports: [AuthService, StaffGuard],
 })
 export class AuthModule {}

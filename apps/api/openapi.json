@@ -279,11 +279,316 @@
           "Onboarding"
         ]
       }
+    },
+    "/v1/ops/invites": {
+      "post": {
+        "operationId": "postOpsInvites",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteOwnerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsInviteResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": "Caller is not staff"
+          },
+          "409": {
+            "description": "Phone already on the platform"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Invite a property owner",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/accounts": {
+      "get": {
+        "operationId": "getOpsAccounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAccountListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List owner accounts",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/accounts/{id}": {
+      "get": {
+        "operationId": "getOpsAccountsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAccountListItemDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Owner account for support",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/ops/audit": {
+      "get": {
+        "operationId": "getOpsAudit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsAuditListResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Recent staff audit events",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/payments": {
+      "post": {
+        "description": "Creates a payment through Paystack (test keys or recorded fixtures). Collection success is a later webhook, not this response. Dashboard fields are `ourRef`, `status`, and `displayText`.",
+        "operationId": "postPayments",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Idempotency-Key reused with a different body"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Start a MoMo charge",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/v1/payments/{id}": {
+      "get": {
+        "description": "Returns receipt-safe fields only. Provider secrets and raw Paystack payloads stay on the server.",
+        "operationId": "getPaymentsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Payment status for the payer",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/v1/payments/{id}/retry": {
+      "post": {
+        "description": "Creates a new payment with a new `ourRef`, linked via `retryOfId`.",
+        "operationId": "postPaymentsRetry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Retry a failed payment",
+        "tags": [
+          "Payments"
+        ]
+      }
     }
   },
   "info": {
     "title": "IoTeedom Smart Pay API",
-    "description": "Auth, session, onboarding, and health endpoints for Smart Pay.",
+    "description": "Auth, session, ops invites, payments, onboarding, and health for Smart Pay.",
     "version": "0.1.0",
     "contact": {}
   },
@@ -299,6 +604,14 @@
     {
       "name": "Onboarding",
       "description": "First-login property confirmation for invited owners."
+    },
+    {
+      "name": "ops",
+      "description": "Staff invite, account list, and audit. Suspend and module edits are later."
+    },
+    {
+      "name": "Payments",
+      "description": "MoMo charges through Paystack. Collection success is a webhook, not this POST."
     },
     {
       "name": "Health",
@@ -464,11 +777,19 @@
             "type": "string"
           },
           "kind": {
-            "type": "string",
             "enum": [
               "home",
               "estate"
-            ]
+            ],
+            "type": "string"
+          },
+          "ecgAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "gwclAccountNumber": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -483,11 +804,11 @@
         "type": "object",
         "properties": {
           "role": {
-            "type": "string",
             "enum": [
               "owner",
               "manager"
-            ]
+            ],
+            "type": "string"
           },
           "accountId": {
             "type": "string"
@@ -496,19 +817,19 @@
             "type": "string"
           },
           "accountKind": {
-            "type": "string",
             "enum": [
               "home",
               "estate"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
-            "type": "string",
             "enum": [
               "invited",
               "active",
               "suspended"
-            ]
+            ],
+            "type": "string"
           },
           "onboardedAt": {
             "type": "string",
@@ -614,11 +935,11 @@
             "example": "020 000 0001"
           },
           "role": {
-            "type": "string",
             "enum": [
               "superadmin",
               "support"
-            ]
+            ],
+            "type": "string"
           },
           "mustChangePin": {
             "type": "boolean"
@@ -650,6 +971,16 @@
             "type": "string",
             "minLength": 1,
             "example": "Accra"
+          },
+          "ecgAccountNumber": {
+            "type": "string",
+            "example": "0412345678",
+            "description": "ECG customer or meter number."
+          },
+          "gwclAccountNumber": {
+            "type": "string",
+            "example": "2001234567",
+            "description": "Ghana Water customer number."
           }
         },
         "required": [
@@ -679,6 +1010,383 @@
           "accountId",
           "status",
           "onboardedAt"
+        ]
+      },
+      "InviteOwnerDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Kwame Boateng"
+          },
+          "phone": {
+            "type": "string",
+            "example": "024 555 0100"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "kwame@email.com"
+          },
+          "property": {
+            "type": "string",
+            "minLength": 1,
+            "example": "12 Boundary Rd, East Legon"
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Accra"
+          },
+          "kind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          },
+          "modules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "ecg": true,
+              "water": true,
+              "utilities": false,
+              "meters": false,
+              "smart_home": false,
+              "solar": false,
+              "ev": false
+            }
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "email",
+          "property",
+          "city",
+          "kind",
+          "modules"
+        ]
+      },
+      "OpsInviteResponseDto": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string"
+          },
+          "inviteId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phoneDisplay": {
+            "type": "string"
+          },
+          "pin": {
+            "type": "string",
+            "description": "Temporary PIN. Shown once in ops and logged in staging. Never stored."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          }
+        },
+        "required": [
+          "accountId",
+          "inviteId",
+          "name",
+          "phoneDisplay",
+          "pin",
+          "expiresAt",
+          "modules"
+        ]
+      },
+      "OpsAccountListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phoneDisplay": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "invited",
+              "active",
+              "suspended"
+            ],
+            "type": "string"
+          },
+          "onboardedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "property": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "moduleFlags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            }
+          },
+          "units": {
+            "type": "number"
+          },
+          "lastSeen": {
+            "type": "string",
+            "nullable": true
+          },
+          "inviteAcceptedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phoneDisplay",
+          "kind",
+          "status",
+          "property",
+          "city",
+          "modules",
+          "moduleFlags",
+          "units"
+        ]
+      },
+      "OpsAccountListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsAccountListItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "OpsAuditItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "actorId",
+          "summary",
+          "at"
+        ]
+      },
+      "OpsAuditListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpsAuditItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "billId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amountPesewas": {
+            "type": "number",
+            "minimum": 1,
+            "example": 12750,
+            "description": "Amount in pesewas. Must match the open bill."
+          },
+          "method": {
+            "enum": [
+              "mtn",
+              "telecel",
+              "at"
+            ],
+            "type": "string",
+            "example": "mtn"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "024 412 8891"
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string",
+            "description": "Must match the bill rail. Sent so a mismatch 400s instead of silent correction."
+          }
+        },
+        "required": [
+          "billId",
+          "amountPesewas",
+          "method",
+          "msisdn",
+          "rail"
+        ]
+      },
+      "PaymentViewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ourRef": {
+            "type": "string",
+            "example": "SP-184201"
+          },
+          "amountPesewas": {
+            "type": "string",
+            "example": "12750",
+            "description": "Pesewas as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "GHS"
+            ]
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "created",
+              "pending",
+              "succeeded",
+              "failed",
+              "expired",
+              "refunded"
+            ],
+            "type": "string"
+          },
+          "fulfillmentStatus": {
+            "enum": [
+              "not_required",
+              "pending",
+              "succeeded",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "displayText": {
+            "type": "string",
+            "example": "Please approve the payment on your phone",
+            "description": "Safe for the dashboard. Never includes provider secrets."
+          }
+        },
+        "required": [
+          "id",
+          "ourRef",
+          "amountPesewas",
+          "currency",
+          "rail",
+          "status",
+          "fulfillmentStatus",
+          "displayText"
+        ]
+      },
+      "RetryPaymentDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "enum": [
+              "mtn",
+              "telecel",
+              "at"
+            ],
+            "type": "string",
+            "example": "mtn"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "024 412 8891"
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string",
+            "description": "Optional. If set, must match the original payment rail."
+          }
+        },
+        "required": [
+          "method",
+          "msisdn"
         ]
       }
     }
