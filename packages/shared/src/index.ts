@@ -25,6 +25,7 @@ export {
 export {
   digitsOnly,
   formatGhPhoneDisplay,
+  formatGhPhoneLocal,
   isPin,
   normalizeGhPhone,
   PIN_LENGTH,
@@ -33,6 +34,7 @@ export {
 export {
   FULFILLMENT_STATUSES,
   type FulfillmentStatus,
+  isMomoNetworkId,
   isPaymentRail,
   MOMO_NETWORKS,
   type MomoNetworkId,

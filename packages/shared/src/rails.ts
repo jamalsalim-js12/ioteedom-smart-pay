@@ -43,3 +43,7 @@ export type MomoNetworkId = keyof typeof MOMO_NETWORKS;
 export function isPaymentRail(value: string): value is PaymentRail {
   return (PAYMENT_RAILS as readonly string[]).includes(value);
 }
+
+export function isMomoNetworkId(value: string): value is MomoNetworkId {
+  return value in MOMO_NETWORKS;
+}

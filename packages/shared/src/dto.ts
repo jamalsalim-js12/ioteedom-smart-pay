@@ -13,6 +13,7 @@ export type HealthResponseDto = {
 };
 
 export type PaymentViewDto = {
+  id: string;
   ourRef: string;
   amountPesewas: string;
   currency: "GHS";
