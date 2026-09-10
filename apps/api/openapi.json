@@ -418,11 +418,177 @@
           "ops"
         ]
       }
+    },
+    "/v1/payments": {
+      "post": {
+        "description": "Creates a payment through Paystack (test keys or recorded fixtures). Collection success is a later webhook, not this response. Dashboard fields are `ourRef`, `status`, and `displayText`.",
+        "operationId": "postPayments",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Idempotency-Key reused with a different body"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Start a MoMo charge",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/v1/payments/{id}": {
+      "get": {
+        "description": "Returns receipt-safe fields only. Provider secrets and raw Paystack payloads stay on the server.",
+        "operationId": "getPaymentsById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Payment status for the payer",
+        "tags": [
+          "Payments"
+        ]
+      }
+    },
+    "/v1/payments/{id}/retry": {
+      "post": {
+        "description": "Creates a new payment with a new `ourRef`, linked via `retryOfId`.",
+        "operationId": "postPaymentsRetry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetryPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentViewResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Retry a failed payment",
+        "tags": [
+          "Payments"
+        ]
+      }
     }
   },
   "info": {
     "title": "IoTeedom Smart Pay API",
-    "description": "Auth, session, ops invites, onboarding, and health for Smart Pay.",
+    "description": "Auth, session, ops invites, payments, onboarding, and health for Smart Pay.",
     "version": "0.1.0",
     "contact": {}
   },
@@ -442,6 +608,10 @@
     {
       "name": "ops",
       "description": "Staff invite, account list, and audit. Suspend and module edits are later."
+    },
+    {
+      "name": "Payments",
+      "description": "MoMo charges through Paystack. Collection success is a webhook, not this POST."
     },
     {
       "name": "Health",
@@ -1076,6 +1246,147 @@
         },
         "required": [
           "items"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "billId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "amountPesewas": {
+            "type": "number",
+            "minimum": 1,
+            "example": 12750,
+            "description": "Amount in pesewas. Must match the open bill."
+          },
+          "method": {
+            "enum": [
+              "mtn",
+              "telecel",
+              "at"
+            ],
+            "type": "string",
+            "example": "mtn"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "024 412 8891"
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string",
+            "description": "Must match the bill rail. Sent so a mismatch 400s instead of silent correction."
+          }
+        },
+        "required": [
+          "billId",
+          "amountPesewas",
+          "method",
+          "msisdn",
+          "rail"
+        ]
+      },
+      "PaymentViewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ourRef": {
+            "type": "string",
+            "example": "SP-184201"
+          },
+          "amountPesewas": {
+            "type": "string",
+            "example": "12750",
+            "description": "Pesewas as a decimal string."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "GHS"
+            ]
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "created",
+              "pending",
+              "succeeded",
+              "failed",
+              "expired",
+              "refunded"
+            ],
+            "type": "string"
+          },
+          "fulfillmentStatus": {
+            "enum": [
+              "not_required",
+              "pending",
+              "succeeded",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "displayText": {
+            "type": "string",
+            "example": "Please approve the payment on your phone",
+            "description": "Safe for the dashboard. Never includes provider secrets."
+          }
+        },
+        "required": [
+          "id",
+          "ourRef",
+          "amountPesewas",
+          "currency",
+          "rail",
+          "status",
+          "fulfillmentStatus",
+          "displayText"
+        ]
+      },
+      "RetryPaymentDto": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "enum": [
+              "mtn",
+              "telecel",
+              "at"
+            ],
+            "type": "string",
+            "example": "mtn"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "024 412 8891"
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string",
+            "description": "Optional. If set, must match the original payment rail."
+          }
+        },
+        "required": [
+          "method",
+          "msisdn"
         ]
       }
     }

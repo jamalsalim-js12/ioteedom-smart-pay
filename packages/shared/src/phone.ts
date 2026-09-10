@@ -26,6 +26,13 @@ export function isPin(value: string): boolean {
   return PIN_PATTERN.test(value);
 }
 
+/** Local `0XXXXXXXXX` for Paystack Charge. Store E.164 on users; convert at the adapter. */
+export function formatGhPhoneLocal(value: string): string | null {
+  const normalized = normalizeGhPhone(value);
+  if (!normalized) return null;
+  return `0${normalized.slice(GHANA_COUNTRY.length)}`;
+}
+
 /** Display as `024 412 8891`. Accepts local or 233-prefixed input. */
 export function formatGhPhoneDisplay(value: string): string {
   const digits = digitsOnly(value);
