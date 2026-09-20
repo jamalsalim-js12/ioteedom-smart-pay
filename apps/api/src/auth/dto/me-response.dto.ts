@@ -54,6 +54,39 @@ export class MeMembershipDto {
   properties!: MePropertyDto[];
 }
 
+export class MeOccupancyDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  unitId!: string;
+
+  @ApiProperty()
+  unitName!: string;
+
+  @ApiProperty()
+  propertyId!: string;
+
+  @ApiProperty()
+  propertyLabel!: string;
+
+  @ApiProperty({ enum: ["home", "estate"] })
+  propertyKind!: "home" | "estate";
+
+  @ApiProperty()
+  accountId!: string;
+
+  @ApiProperty()
+  accountName!: string;
+
+  @ApiProperty({
+    type: "object",
+    additionalProperties: { type: "boolean" },
+    example: Object.fromEntries(MODULE_IDS.map((id) => [id, id === "ecg" || id === "water"])),
+  })
+  modules!: Record<string, boolean>;
+}
+
 export class MeUserResponseDto {
   @ApiProperty({ enum: ["user"] })
   kind!: "user";
@@ -75,6 +108,12 @@ export class MeUserResponseDto {
 
   @ApiProperty({ type: [MeMembershipDto] })
   memberships!: MeMembershipDto[];
+
+  @ApiProperty({
+    type: [MeOccupancyDto],
+    description: "Open unit tenancies. Tenants have these and usually no memberships.",
+  })
+  occupancies!: MeOccupancyDto[];
 }
 
 export class MeStaffResponseDto {

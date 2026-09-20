@@ -190,7 +190,7 @@
     },
     "/v1/me": {
       "get": {
-        "description": "Returns the signed-in household user (memberships and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
+        "description": "Returns the signed-in household user (memberships, open occupancies, and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
         "operationId": "getMe",
         "parameters": [],
         "responses": {
@@ -584,6 +584,117 @@
           "Payments"
         ]
       }
+    },
+    "/v1/bills": {
+      "get": {
+        "description": "Owners see property-level bills (their ECG, GWCL). Tenants see bills on their open occupancy. Unit ECG is never payable by the estate owner here.",
+        "operationId": "getBills",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Bills visible to the signed-in user",
+        "tags": [
+          "Bills"
+        ]
+      }
+    },
+    "/v1/units/ecg-status": {
+      "get": {
+        "description": "Estate owners see whether each unit's power is settled. They cannot pay those bills — only the tenant can.",
+        "operationId": "getUnitsEcgStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitEcgStatusListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Tenant ECG status for every unit the owner controls",
+        "tags": [
+          "Units"
+        ]
+      }
+    },
+    "/v1/units/{id}/ecg-status": {
+      "get": {
+        "description": "Owner-only. Status view — not a pay endpoint.",
+        "operationId": "getUnitsByIdEcgStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitEcgStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "ECG status for one unit",
+        "tags": [
+          "Units"
+        ]
+      }
     }
   },
   "info": {
@@ -611,7 +722,15 @@
     },
     {
       "name": "Payments",
-      "description": "MoMo charges through Paystack. Collection success is a webhook, not this POST."
+      "description": "MoMo charges through Paystack. Collection success is a webhook or verify poll, not this POST."
+    },
+    {
+      "name": "Bills",
+      "description": "Open and paid bills visible to the signed-in owner or tenant."
+    },
+    {
+      "name": "Units",
+      "description": "Estate unit views for owners, including tenant ECG settlement status."
     },
     {
       "name": "Health",
@@ -868,6 +987,65 @@
           "properties"
         ]
       },
+      "MeOccupancyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "unitId": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "string"
+          },
+          "propertyLabel": {
+            "type": "string"
+          },
+          "propertyKind": {
+            "enum": [
+              "home",
+              "estate"
+            ],
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "accountName": {
+            "type": "string"
+          },
+          "modules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "example": {
+              "ecg": true,
+              "water": true,
+              "utilities": false,
+              "meters": false,
+              "smart_home": false,
+              "solar": false,
+              "ev": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "unitId",
+          "unitName",
+          "propertyId",
+          "propertyLabel",
+          "propertyKind",
+          "accountId",
+          "accountName",
+          "modules"
+        ]
+      },
       "MeUserResponseDto": {
         "type": "object",
         "properties": {
@@ -899,6 +1077,13 @@
             "items": {
               "$ref": "#/components/schemas/MeMembershipDto"
             }
+          },
+          "occupancies": {
+            "description": "Open unit tenancies. Tenants have these and usually no memberships.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeOccupancyDto"
+            }
           }
         },
         "required": [
@@ -908,7 +1093,8 @@
           "phone",
           "phoneDisplay",
           "mustChangePin",
-          "memberships"
+          "memberships",
+          "occupancies"
         ]
       },
       "MeStaffResponseDto": {
@@ -1387,6 +1573,202 @@
         "required": [
           "method",
           "msisdn"
+        ]
+      },
+      "BillListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "ecg_postpaid",
+              "ecg_prepaid",
+              "water_tenant",
+              "water_gwcl",
+              "utility"
+            ],
+            "type": "string"
+          },
+          "rail": {
+            "enum": [
+              "direct",
+              "collect",
+              "remit"
+            ],
+            "type": "string"
+          },
+          "payeeType": {
+            "enum": [
+              "ecg",
+              "gwcl",
+              "owner",
+              "utility",
+              "ev_wallet"
+            ],
+            "type": "string"
+          },
+          "payeeLabel": {
+            "type": "string",
+            "example": "ECG"
+          },
+          "cycle": {
+            "type": "string"
+          },
+          "dueAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date"
+          },
+          "amountDuePesewas": {
+            "type": "string",
+            "example": "48620",
+            "description": "Pesewas as a decimal string."
+          },
+          "status": {
+            "enum": [
+              "open",
+              "paid",
+              "void"
+            ],
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "string"
+          },
+          "propertyLabel": {
+            "type": "string"
+          },
+          "unitId": {
+            "type": "string",
+            "nullable": true
+          },
+          "unitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "meterNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "usageM3": {
+            "type": "string",
+            "nullable": true
+          },
+          "payable": {
+            "type": "boolean",
+            "description": "True when this actor may POST /payments against the bill."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "rail",
+          "payeeType",
+          "payeeLabel",
+          "cycle",
+          "amountDuePesewas",
+          "status",
+          "propertyId",
+          "propertyLabel",
+          "payable"
+        ]
+      },
+      "BillListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillListItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "UnitEcgStatusDto": {
+        "type": "object",
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "propertyId": {
+            "type": "string"
+          },
+          "propertyLabel": {
+            "type": "string"
+          },
+          "tenantName": {
+            "type": "string",
+            "nullable": true
+          },
+          "accountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "meterNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "open",
+              "paid",
+              "none"
+            ],
+            "type": "string",
+            "description": "open = money still due; paid = settled this cycle; none = no ECG bill row."
+          },
+          "amountDuePesewas": {
+            "type": "string",
+            "example": "42000",
+            "description": "Pesewas as a decimal string."
+          },
+          "billId": {
+            "type": "string",
+            "nullable": true
+          },
+          "cycle": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerCanPay": {
+            "type": "boolean",
+            "description": "Owners never pay this bill. Status only."
+          }
+        },
+        "required": [
+          "unitId",
+          "unitName",
+          "propertyId",
+          "propertyLabel",
+          "status",
+          "amountDuePesewas",
+          "ownerCanPay"
+        ]
+      },
+      "UnitEcgStatusListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitEcgStatusDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }

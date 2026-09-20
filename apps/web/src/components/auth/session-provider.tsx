@@ -70,24 +70,44 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (phase !== "authed" || !session) return;
     const membership = session.memberships[0];
+    const occupancy = session.occupancies[0];
     const property = membership?.properties[0];
     useDemoStore.setState((state) => ({
-      session: {
-        role: session.role === "ops" ? "ops" : "household",
-        name: session.name,
-        phone: session.phoneDisplay,
-        email: state.session?.email ?? "",
-      },
+      session:
+        session.role === "ops"
+          ? {
+              role: "ops",
+              name: session.name,
+              phone: session.phoneDisplay,
+              email: state.session?.email ?? "",
+            }
+          : session.role === "tenant" && occupancy
+            ? {
+                role: "tenant",
+                name: session.name,
+                phone: session.phoneDisplay,
+                email: state.session?.email ?? "",
+                unitId: occupancy.unitId,
+                propertyId: demoPropertyId(occupancy.propertyKind),
+              }
+            : {
+                role: "household",
+                name: session.name,
+                phone: session.phoneDisplay,
+                email: state.session?.email ?? "",
+              },
       onboarded: session.onboarded,
       enabled: session.enabled,
       activePropertyId: membership
         ? demoPropertyId(membership.accountKind)
-        : state.activePropertyId,
+        : occupancy
+          ? demoPropertyId(occupancy.propertyKind)
+          : state.activePropertyId,
       profile: {
         ...state.profile,
         name: session.name,
         phone: session.phoneDisplay,
-        property: property?.address ?? state.profile.property,
+        property: property?.address ?? occupancy?.propertyLabel ?? state.profile.property,
         city: property?.city ?? state.profile.city,
       },
     }));

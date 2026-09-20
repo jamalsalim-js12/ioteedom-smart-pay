@@ -4,12 +4,13 @@ import { createContext, useContext } from "react";
 import type {
   AuthTokensDto,
   MeMembershipDto,
+  MeOccupancyDto,
   MeStaffResponseDto,
   MeUserResponseDto,
 } from "@/api/generated/api";
 import { blankModules, type PropertyId, type ServiceId } from "@/data/demo";
 
-type AppRole = "household" | "ops";
+type AppRole = "household" | "tenant" | "ops";
 
 export type SessionView = {
   role: AppRole;
@@ -21,6 +22,7 @@ export type SessionView = {
   onboarded: boolean;
   enabled: Record<ServiceId, boolean>;
   memberships: MeMembershipDto[];
+  occupancies: MeOccupancyDto[];
 };
 
 export type SessionPhase = "boot" | "guest" | "authed";
@@ -93,28 +95,50 @@ export function sessionFromMe(me: MeUserResponseDto | MeStaffResponseDto): Sessi
       onboarded: true,
       enabled: blankModules(),
       memberships: [],
+      occupancies: [],
     };
   }
 
   const primary = me.memberships[0];
-  if (!primary) return null;
+  const occupancy = me.occupancies[0];
 
-  return {
-    role: "household",
-    id: me.id,
-    name: me.name,
-    phone: me.phone,
-    phoneDisplay: me.phoneDisplay,
-    mustChangePin: me.mustChangePin,
-    onboarded: Boolean(primary.onboardedAt) || primary.status === "active",
-    enabled: enabledFromModules(primary.modules),
-    memberships: me.memberships,
-  };
+  if (primary) {
+    return {
+      role: "household",
+      id: me.id,
+      name: me.name,
+      phone: me.phone,
+      phoneDisplay: me.phoneDisplay,
+      mustChangePin: me.mustChangePin,
+      onboarded: Boolean(primary.onboardedAt) || primary.status === "active",
+      enabled: enabledFromModules(primary.modules),
+      memberships: me.memberships,
+      occupancies: me.occupancies,
+    };
+  }
+
+  if (occupancy) {
+    return {
+      role: "tenant",
+      id: me.id,
+      name: me.name,
+      phone: me.phone,
+      phoneDisplay: me.phoneDisplay,
+      mustChangePin: me.mustChangePin,
+      onboarded: true,
+      enabled: enabledFromModules(occupancy.modules),
+      memberships: [],
+      occupancies: me.occupancies,
+    };
+  }
+
+  return null;
 }
 
 export function destinationFor(session: SessionView): string {
   if (session.mustChangePin) return "/pin";
   if (session.role === "ops") return "/admin";
+  if (session.role === "tenant") return "/bills";
   if (!session.onboarded) return "/onboarding";
   return "/";
 }

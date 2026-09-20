@@ -61,7 +61,7 @@ function tenantBills(house: HouseState, unit: EstateUnit): BillState[] {
   ];
 }
 
-export function visibleBills(
+function visibleBills(
   house: HouseState,
   enabled: Record<ServiceId, boolean>,
   session?: Session | null,

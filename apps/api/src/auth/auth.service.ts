@@ -213,6 +213,20 @@ export class AuthService {
             },
           },
         },
+        occupancies: {
+          where: { endedAt: null },
+          include: {
+            unit: {
+              include: {
+                property: {
+                  include: {
+                    account: { include: { modules: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -242,6 +256,19 @@ export class AuthService {
           ecgAccountNumber: property.ecgAccountNumber,
           gwclAccountNumber: property.gwclAccountNumber,
         })),
+      })),
+      occupancies: user.occupancies.map((occupancy) => ({
+        id: occupancy.id,
+        unitId: occupancy.unitId,
+        unitName: occupancy.unit.name,
+        propertyId: occupancy.unit.propertyId,
+        propertyLabel: occupancy.unit.property.label,
+        propertyKind: occupancy.unit.property.kind,
+        accountId: occupancy.unit.property.accountId,
+        accountName: occupancy.unit.property.account.name,
+        modules: Object.fromEntries(
+          occupancy.unit.property.account.modules.map((row) => [row.module, row.enabled]),
+        ),
       })),
     };
   }
