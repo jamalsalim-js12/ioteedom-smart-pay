@@ -45,8 +45,8 @@ async function main() {
     staffId: staff.id,
   });
 
-  await seedModules(homeAccount.id, staff.id);
-  await seedModules(estateAccount.id, staff.id);
+  await seedModules(homeAccount.id, staff.id, new Set(["ecg", "water"]));
+  await seedModules(estateAccount.id, staff.id, "all");
 
   const homeProperty = await upsertProperty({
     accountId: homeAccount.id,
@@ -538,15 +538,20 @@ async function seedEstateBills(input: {
   });
 }
 
-async function seedModules(accountId: string, staffId: string) {
+async function seedModules(
+  accountId: string,
+  staffId: string,
+  enabledModules: ReadonlySet<(typeof MODULES)[number]> | "all",
+) {
   for (const module of MODULES) {
+    const enabled = enabledModules === "all" || enabledModules.has(module);
     await prisma.accountModule.upsert({
       where: { accountId_module: { accountId, module } },
-      update: {},
+      update: { enabled, setByStaffId: staffId },
       create: {
         accountId,
         module,
-        enabled: module === "ecg" || module === "water",
+        enabled,
         setByStaffId: staffId,
       },
     });
@@ -558,8 +563,8 @@ main()
     console.log("Seeded:");
     console.log("  owner-occupier  024 412 8891 / 2468");
     console.log("  estate owner    030 200 0100 / 2468");
-    console.log("  tenant unit 1   024 555 1001 / 2468");
-    console.log("  tenant unit 2   024 555 1002 / 2468");
+    console.log("  tenant unit 1   024 555 1001 / 2468  (all modules)");
+    console.log("  tenant unit 2   024 555 1002 / 2468  (all modules)");
     console.log("  staff           020 000 0001 / 1357");
     await prisma.$disconnect();
   })
