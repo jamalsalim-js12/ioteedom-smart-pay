@@ -170,6 +170,28 @@ export interface MeMembershipDto {
   properties: MePropertyDto[];
 }
 
+export type MeOccupancyDtoPropertyKind = typeof MeOccupancyDtoPropertyKind[keyof typeof MeOccupancyDtoPropertyKind];
+
+
+export const MeOccupancyDtoPropertyKind = {
+  home: 'home',
+  estate: 'estate',
+} as const;
+
+export type MeOccupancyDtoModules = {[key: string]: boolean};
+
+export interface MeOccupancyDto {
+  id: string;
+  unitId: string;
+  unitName: string;
+  propertyId: string;
+  propertyLabel: string;
+  propertyKind: MeOccupancyDtoPropertyKind;
+  accountId: string;
+  accountName: string;
+  modules: MeOccupancyDtoModules;
+}
+
 export type MeUserResponseDtoKind = typeof MeUserResponseDtoKind[keyof typeof MeUserResponseDtoKind];
 
 
@@ -185,6 +207,8 @@ export interface MeUserResponseDto {
   phoneDisplay: string;
   mustChangePin: boolean;
   memberships: MeMembershipDto[];
+  /** Open unit tenancies. Tenants have these and usually no memberships. */
+  occupancies: MeOccupancyDto[];
 }
 
 export type MeStaffResponseDtoKind = typeof MeStaffResponseDtoKind[keyof typeof MeStaffResponseDtoKind];
@@ -442,6 +466,117 @@ export interface RetryPaymentDto {
   msisdn: string;
   /** Optional. If set, must match the original payment rail. */
   rail?: RetryPaymentDtoRail;
+}
+
+export type BillListItemDtoType = typeof BillListItemDtoType[keyof typeof BillListItemDtoType];
+
+
+export const BillListItemDtoType = {
+  ecg_postpaid: 'ecg_postpaid',
+  ecg_prepaid: 'ecg_prepaid',
+  water_tenant: 'water_tenant',
+  water_gwcl: 'water_gwcl',
+  utility: 'utility',
+} as const;
+
+export type BillListItemDtoRail = typeof BillListItemDtoRail[keyof typeof BillListItemDtoRail];
+
+
+export const BillListItemDtoRail = {
+  direct: 'direct',
+  collect: 'collect',
+  remit: 'remit',
+} as const;
+
+export type BillListItemDtoPayeeType = typeof BillListItemDtoPayeeType[keyof typeof BillListItemDtoPayeeType];
+
+
+export const BillListItemDtoPayeeType = {
+  ecg: 'ecg',
+  gwcl: 'gwcl',
+  owner: 'owner',
+  utility: 'utility',
+  ev_wallet: 'ev_wallet',
+} as const;
+
+export type BillListItemDtoStatus = typeof BillListItemDtoStatus[keyof typeof BillListItemDtoStatus];
+
+
+export const BillListItemDtoStatus = {
+  open: 'open',
+  paid: 'paid',
+  void: 'void',
+} as const;
+
+export interface BillListItemDto {
+  id: string;
+  type: BillListItemDtoType;
+  rail: BillListItemDtoRail;
+  payeeType: BillListItemDtoPayeeType;
+  payeeLabel: string;
+  cycle: string;
+  /** @nullable */
+  dueAt?: string | null;
+  /** Pesewas as a decimal string. */
+  amountDuePesewas: string;
+  status: BillListItemDtoStatus;
+  propertyId: string;
+  propertyLabel: string;
+  /** @nullable */
+  unitId?: string | null;
+  /** @nullable */
+  unitName?: string | null;
+  /** @nullable */
+  accountNumber?: string | null;
+  /** @nullable */
+  meterNumber?: string | null;
+  /** @nullable */
+  usageM3?: string | null;
+  /** True when this actor may POST /payments against the bill. */
+  payable: boolean;
+}
+
+export interface BillListResponseDto {
+  items: BillListItemDto[];
+}
+
+/**
+ * open = money still due; paid = settled this cycle; none = no ECG bill row.
+ */
+export type UnitEcgStatusDtoStatus = typeof UnitEcgStatusDtoStatus[keyof typeof UnitEcgStatusDtoStatus];
+
+
+export const UnitEcgStatusDtoStatus = {
+  open: 'open',
+  paid: 'paid',
+  none: 'none',
+} as const;
+
+export interface UnitEcgStatusDto {
+  unitId: string;
+  unitName: string;
+  propertyId: string;
+  propertyLabel: string;
+  /** @nullable */
+  tenantName?: string | null;
+  /** @nullable */
+  accountNumber?: string | null;
+  /** @nullable */
+  meterNumber?: string | null;
+  /** open = money still due; paid = settled this cycle; none = no ECG bill row. */
+  status: UnitEcgStatusDtoStatus;
+  /** Pesewas as a decimal string. */
+  amountDuePesewas: string;
+  /** @nullable */
+  billId?: string | null;
+  /** @nullable */
+  cycle?: string | null;
+  /** Owners never pay this bill. Status only. */
+  ownerCanPay: boolean;
+}
+
+export interface UnitEcgStatusListResponseDto {
+  items: UnitEcgStatusDto[];
 }
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -930,7 +1065,7 @@ export const getGetMeUrl = () => {
 }
 
 /**
- * Returns the signed-in household user (memberships and enabled modules) or IoTeedom staff profile, discriminated by `kind`.
+ * Returns the signed-in household user (memberships, open occupancies, and enabled modules) or IoTeedom staff profile, discriminated by `kind`.
  * @summary Current user or staff session
  */
 export const getMe = async ( options?: Parameters<typeof apiFetch>[1]): Promise<MeUserResponseDto | MeStaffResponseDto> => {
@@ -1783,3 +1918,303 @@ export const usePostPaymentsRetry = <TError = ErrorType<void>,
       > => {
       return useMutation(getPostPaymentsRetryMutationOptions(options), queryClient);
     }
+
+export const getGetBillsUrl = () => {
+
+
+
+
+  return `/v1/bills`
+}
+
+/**
+ * Owners see property-level bills (their ECG, GWCL). Tenants see bills on their open occupancy. Unit ECG is never payable by the estate owner here.
+ * @summary Bills visible to the signed-in user
+ */
+export const getBills = async ( options?: Parameters<typeof apiFetch>[1]): Promise<BillListResponseDto> => {
+
+  return apiFetch<BillListResponseDto>(getGetBillsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillsQueryKey = () => {
+    return [
+    `/v1/bills`
+    ] as const;
+    }
+
+
+export const getGetBillsQueryOptions = <TData = Awaited<ReturnType<typeof getBills>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBills>>> = ({ signal }) => getBills({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBillsQueryResult = NonNullable<Awaited<ReturnType<typeof getBills>>>
+export type GetBillsQueryError = ErrorType<void>
+
+
+export function useGetBills<TData = Awaited<ReturnType<typeof getBills>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBills>>,
+          TError,
+          Awaited<ReturnType<typeof getBills>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBills<TData = Awaited<ReturnType<typeof getBills>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBills>>,
+          TError,
+          Awaited<ReturnType<typeof getBills>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBills<TData = Awaited<ReturnType<typeof getBills>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Bills visible to the signed-in user
+ */
+
+export function useGetBills<TData = Awaited<ReturnType<typeof getBills>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBills>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBillsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetUnitsEcgStatusUrl = () => {
+
+
+
+
+  return `/v1/units/ecg-status`
+}
+
+/**
+ * Estate owners see whether each unit's power is settled. They cannot pay those bills — only the tenant can.
+ * @summary Tenant ECG status for every unit the owner controls
+ */
+export const getUnitsEcgStatus = async ( options?: Parameters<typeof apiFetch>[1]): Promise<UnitEcgStatusListResponseDto> => {
+
+  return apiFetch<UnitEcgStatusListResponseDto>(getGetUnitsEcgStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUnitsEcgStatusQueryKey = () => {
+    return [
+    `/v1/units/ecg-status`
+    ] as const;
+    }
+
+
+export const getGetUnitsEcgStatusQueryOptions = <TData = Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUnitsEcgStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUnitsEcgStatus>>> = ({ signal }) => getUnitsEcgStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUnitsEcgStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getUnitsEcgStatus>>>
+export type GetUnitsEcgStatusQueryError = ErrorType<void>
+
+
+export function useGetUnitsEcgStatus<TData = Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUnitsEcgStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getUnitsEcgStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUnitsEcgStatus<TData = Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUnitsEcgStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getUnitsEcgStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUnitsEcgStatus<TData = Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Tenant ECG status for every unit the owner controls
+ */
+
+export function useGetUnitsEcgStatus<TData = Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUnitsEcgStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetUnitsByIdEcgStatusUrl = (id: string,) => {
+
+
+
+
+  return `/v1/units/${id}/ecg-status`
+}
+
+/**
+ * Owner-only. Status view — not a pay endpoint.
+ * @summary ECG status for one unit
+ */
+export const getUnitsByIdEcgStatus = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<UnitEcgStatusDto> => {
+
+  return apiFetch<UnitEcgStatusDto>(getGetUnitsByIdEcgStatusUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUnitsByIdEcgStatusQueryKey = (id: string,) => {
+    return [
+    `/v1/units/${id}/ecg-status`
+    ] as const;
+    }
+
+
+export const getGetUnitsByIdEcgStatusQueryOptions = <TData = Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUnitsByIdEcgStatusQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>> = ({ signal }) => getUnitsByIdEcgStatus(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetUnitsByIdEcgStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>>
+export type GetUnitsByIdEcgStatusQueryError = ErrorType<void>
+
+
+export function useGetUnitsByIdEcgStatus<TData = Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUnitsByIdEcgStatus<TData = Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetUnitsByIdEcgStatus<TData = Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary ECG status for one unit
+ */
+
+export function useGetUnitsByIdEcgStatus<TData = Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUnitsByIdEcgStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetUnitsByIdEcgStatusQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

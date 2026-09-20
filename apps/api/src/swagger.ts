@@ -15,8 +15,10 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addTag("ops", "Staff invite, account list, and audit. Suspend and module edits are later.")
     .addTag(
       "Payments",
-      "MoMo charges through Paystack. Collection success is a webhook, not this POST.",
+      "MoMo charges through Paystack. Collection success is a webhook or verify poll, not this POST.",
     )
+    .addTag("Bills", "Open and paid bills visible to the signed-in owner or tenant.")
+    .addTag("Units", "Estate unit views for owners, including tenant ECG settlement status.")
     .addTag("Health", "Liveness of the API process and Postgres.")
     .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
     .addCookieAuth("refresh_token", {

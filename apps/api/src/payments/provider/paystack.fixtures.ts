@@ -9,11 +9,11 @@ import type {
 } from "./provider.adapter";
 
 /** Fixture MSISDN that Paystack-shaped Charge declines so retry can be exercised. */
-export const FIXTURE_DECLINED_LOCAL = "0200000000";
+const FIXTURE_DECLINED_LOCAL = "0200000000";
 
 const DISPLAY_TEXT = "Please approve the payment on your phone";
 
-export function fixtureProviderRef(reference: string): string {
+function fixtureProviderRef(reference: string): string {
   const digest = createHash("sha256").update(reference).digest("hex");
   const n = BigInt(`0x${digest.slice(0, 12)}`) % 9_000_000_000n;
   return String(1_000_000_000n + n);
@@ -34,11 +34,11 @@ export function fixtureVerify(reference: string): VerifiedCharge {
   return {
     reference,
     providerRef: fixtureProviderRef(reference),
-    status: "pending",
+    status: "success",
     amountPesewas: 0n,
     currency: "GHS",
     feesPesewas: null,
-    gatewayResponse: "Pending OTP",
+    gatewayResponse: "Approved",
   };
 }
 
