@@ -136,10 +136,14 @@ async function upsertAccount(input: { name: string; kind: "home" | "estate"; sta
   const existing = await prisma.account.findFirst({
     where: { name: input.name, kind: input.kind },
   });
+  const data = {
+    status: "active" as const,
+    onboardedAt: new Date(),
+  };
   if (existing) {
     return prisma.account.update({
       where: { id: existing.id },
-      data: { status: "invited", onboardedAt: null },
+      data,
     });
   }
   return prisma.account.create({
@@ -147,7 +151,7 @@ async function upsertAccount(input: { name: string; kind: "home" | "estate"; sta
       id: ulid(),
       name: input.name,
       kind: input.kind,
-      status: "invited",
+      ...data,
       createdByStaffId: input.staffId,
     },
   });
@@ -191,7 +195,7 @@ async function upsertOwner(input: {
     update: {
       pinHash: input.pinHash,
       email: input.email,
-      mustChangePin: true,
+      mustChangePin: false,
       pinFailedCount: 0,
       pinLockedUntil: null,
     },
@@ -202,7 +206,7 @@ async function upsertOwner(input: {
       email: input.email,
       name: input.name,
       pinHash: input.pinHash,
-      mustChangePin: true,
+      mustChangePin: false,
     },
   });
   await prisma.membership.upsert({
@@ -231,7 +235,7 @@ async function upsertTenant(input: {
     update: {
       pinHash: input.pinHash,
       email: input.email,
-      mustChangePin: true,
+      mustChangePin: false,
       pinFailedCount: 0,
       pinLockedUntil: null,
     },
@@ -242,7 +246,7 @@ async function upsertTenant(input: {
       email: input.email,
       name: input.name,
       pinHash: input.pinHash,
-      mustChangePin: true,
+      mustChangePin: false,
     },
   });
 }
@@ -453,8 +457,8 @@ async function seedEstateBills(input: {
     utilityAccountId: ownerEcg.id,
     cycle: "2026-07",
     dueAt: new Date("2026-08-28"),
-    amountDuePesewas: 0n,
-    amountOriginalPesewas: 0n,
+    amountDuePesewas: 18500n,
+    amountOriginalPesewas: 18500n,
     payeeType: "ecg",
     payeeLabel: "ECG",
   });
@@ -551,6 +555,12 @@ async function seedModules(accountId: string, staffId: string) {
 
 main()
   .then(async () => {
+    console.log("Seeded:");
+    console.log("  owner-occupier  024 412 8891 / 2468");
+    console.log("  estate owner    030 200 0100 / 2468");
+    console.log("  tenant unit 1   024 555 1001 / 2468");
+    console.log("  tenant unit 2   024 555 1002 / 2468");
+    console.log("  staff           020 000 0001 / 1357");
     await prisma.$disconnect();
   })
   .catch(async (error: unknown) => {

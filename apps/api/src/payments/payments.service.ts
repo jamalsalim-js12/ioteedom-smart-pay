@@ -69,11 +69,28 @@ export class PaymentsService {
   }
 
   async getById(actor: AuthPrincipal, id: string) {
-    const payment = await this.prisma.payment.findUnique({ where: { id } });
+    let payment = await this.prisma.payment.findUnique({ where: { id } });
     if (!payment) throw new NotFoundException("Payment not found");
-    if (actor.kind === "staff") return this.toView(payment);
-    this.assertPayer(payment.payerUserId, actor.id);
+    if (actor.kind !== "staff") {
+      this.assertPayer(payment.payerUserId, actor.id);
+    }
+    if (payment.status === "pending" || payment.status === "created") {
+      payment = await this.refreshFromProvider(payment);
+    }
     return this.toView(payment);
+  }
+
+  async handlePaystackWebhook(rawBody: Buffer, signature: string | undefined) {
+    const event = this.provider.parseWebhook(rawBody, signature);
+    if (!event.reference) {
+      return { received: true };
+    }
+    if (event.event === "charge.success") {
+      await this.applyCollectionSuccess(event.reference, event.providerEventId);
+    } else if (event.event === "charge.failed") {
+      await this.applyCollectionFailure(event.reference, "charge_failed");
+    }
+    return { received: true };
   }
 
   async retry(actor: AuthPrincipal, id: string, dto: RetryPaymentDto, idempotencyKey: string) {
@@ -281,6 +298,103 @@ export class PaymentsService {
     if (existing.billId !== dto.billId || existing.amountPesewas !== BigInt(dto.amountPesewas)) {
       throw new ConflictException("Idempotency-Key already used for a different payment");
     }
+  }
+
+  private async applyCollectionSuccess(reference: string, providerRef: string | null) {
+    const payment = await this.prisma.payment.findUnique({ where: { ourRef: reference } });
+    if (!payment) {
+      return null;
+    }
+    if (payment.status === "succeeded" || payment.status === "refunded") {
+      return payment;
+    }
+    if (payment.status === "failed" || payment.status === "expired") {
+      return payment;
+    }
+
+    const fulfillmentPending =
+      payment.rail === "direct" &&
+      (payment.payeeType === "ecg" ||
+        payment.payeeType === "gwcl" ||
+        payment.payeeType === "utility");
+
+    return this.prisma.$transaction(async (tx) => {
+      const next = await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: "succeeded",
+          collectionStatus: "succeeded",
+          fulfillmentStatus: fulfillmentPending ? "pending" : payment.fulfillmentStatus,
+          providerRef: providerRef ?? payment.providerRef,
+          failureCode: null,
+        },
+      });
+
+      if (payment.billId) {
+        await tx.bill.update({
+          where: { id: payment.billId },
+          data: { status: "paid", amountDuePesewas: 0n },
+        });
+      }
+
+      const existingLedger = await tx.ledgerEntry.findFirst({
+        where: { paymentId: payment.id },
+      });
+      if (!existingLedger && payment.payeeType === "ecg") {
+        await tx.ledgerEntry.create({
+          data: {
+            id: newId(),
+            paymentId: payment.id,
+            accountId: payment.accountId,
+            propertyId: payment.propertyId,
+            kind: "ecg_out",
+            direction: "debit",
+            amountPesewas: payment.amountPesewas,
+          },
+        });
+      }
+
+      return next;
+    });
+  }
+
+  private async applyCollectionFailure(reference: string, failureCode: string) {
+    const payment = await this.prisma.payment.findUnique({ where: { ourRef: reference } });
+    if (!payment) {
+      return null;
+    }
+    if (payment.status === "succeeded" || payment.status === "refunded") {
+      return payment;
+    }
+    if (payment.status === "failed" || payment.status === "expired") {
+      return payment;
+    }
+    return this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: "failed",
+        collectionStatus: "failed",
+        failureCode,
+      },
+    });
+  }
+
+  private async refreshFromProvider(payment: PaymentRow): Promise<PaymentRow> {
+    let verified: Awaited<ReturnType<ProviderAdapter["verifyTransaction"]>>;
+    try {
+      verified = await this.provider.verifyTransaction(payment.ourRef);
+    } catch {
+      return payment;
+    }
+    if (verified.status === "success") {
+      const next = await this.applyCollectionSuccess(payment.ourRef, verified.providerRef);
+      return next ?? payment;
+    }
+    if (verified.status === "failed" || verified.status === "abandoned") {
+      const next = await this.applyCollectionFailure(payment.ourRef, verified.status);
+      return next ?? payment;
+    }
+    return payment;
   }
 
   private toView(payment: PaymentRow, displayText?: string) {

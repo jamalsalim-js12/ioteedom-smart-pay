@@ -56,7 +56,7 @@ export function RouteGate({ children }: { children: ReactNode }) {
       session.onboarded &&
       (guestPaths.has(pathname) || pathname === "/onboarding" || pathname === "/pin")
     ) {
-      router.replace("/");
+      router.replace(dest);
     }
   }, [isReady, session, ops, pathname, router]);
 

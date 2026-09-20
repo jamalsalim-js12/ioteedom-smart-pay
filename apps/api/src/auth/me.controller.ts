@@ -11,10 +11,15 @@ import {
 import { AuthService } from "./auth.service";
 import type { AuthPrincipal } from "./auth.types";
 import { CurrentUser } from "./current-user.decorator";
-import { MeMembershipDto, MeStaffResponseDto, MeUserResponseDto } from "./dto/me-response.dto";
+import {
+  MeMembershipDto,
+  MeOccupancyDto,
+  MeStaffResponseDto,
+  MeUserResponseDto,
+} from "./dto/me-response.dto";
 
 @ApiTags("Me")
-@ApiExtraModels(MeUserResponseDto, MeStaffResponseDto, MeMembershipDto)
+@ApiExtraModels(MeUserResponseDto, MeStaffResponseDto, MeMembershipDto, MeOccupancyDto)
 @Controller("me")
 export class MeController {
   constructor(private readonly auth: AuthService) {}
@@ -25,7 +30,7 @@ export class MeController {
     operationId: "getMe",
     summary: "Current user or staff session",
     description:
-      "Returns the signed-in household user (memberships and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
+      "Returns the signed-in household user (memberships, open occupancies, and enabled modules) or IoTeedom staff profile, discriminated by `kind`.",
   })
   @ApiOkResponse({
     description: "Current household user or staff profile.",
